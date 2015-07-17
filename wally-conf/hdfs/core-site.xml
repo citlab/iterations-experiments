@@ -7,7 +7,7 @@
 <configuration>
     <property>
         <name>fs.default.name</name>
-        <value>hdfs://wally053:45010/</value>
+        <value>hdfs://wally052:45010/</value>
     </property>
     <property>
         <name>hadoop.tmp.dir</name>

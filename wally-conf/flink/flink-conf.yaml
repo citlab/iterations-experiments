@@ -21,7 +21,7 @@
 # Common
 #==============================================================================
 
-jobmanager.rpc.address: wally053
+jobmanager.rpc.address: wally052
 
 jobmanager.rpc.port: 6002
 
@@ -33,7 +33,7 @@ taskmanager.memory.fraction = 0.7
 
 taskmanager.numberOfTaskSlots: 8
 
-parallelism.default: 80
+parallelism.default: 160
 
 #==============================================================================
 # Web Frontend

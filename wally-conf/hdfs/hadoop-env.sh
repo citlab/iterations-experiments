@@ -46,7 +46,7 @@ done
 #export HADOOP_NAMENODE_INIT_HEAPSIZE=""
 
 # Extra Java runtime options.  Empty by default.
-export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=/home/andreas.kunft/peel/systems/hadoop-2.4.1/lib"
+export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=/home/lauritz/hadoop-2.7.0/lib"
 export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true"
 
 # Command specific options appended to HADOOP_OPTS when specified

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #Paths
-JARS="/home/lauritz/flink/lib/flink-dist-0.9.0.jar:/home/lauritz/flink/examples/flink-java-examples-0.9.0-KMeans.jar"
-HADOOP_PATH="/home/lauritz/hadoop-2.7.0"
+JARS="/home/bbdc/flink/lib/flink-dist-0.9.0.jar:/home/bbdc/flink/examples/flink-java-examples-0.9.0-KMeans.jar"
+HADOOP_PATH="/home/bbdc/hadoop-2.7.0"
 
 #Kmean variables
 points=400000000

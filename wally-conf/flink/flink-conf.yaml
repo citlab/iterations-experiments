@@ -90,7 +90,7 @@ taskmanager.network.bufferSizeInBytes = 16384
 # If not specified, the system-specific Java temporary directory (java.io.tmpdir
 # property) is taken.
 #
-taskmanager.tmp.dirs: /data/lauritz/flink/tmp
+taskmanager.tmp.dirs: /data/bbdc/flink/tmp
 
 # Path to the Hadoop configuration directory.
 #
@@ -102,4 +102,4 @@ taskmanager.tmp.dirs: /data/lauritz/flink/tmp
 # via keys 'fs.hdfs.hdfsdefault' and 'fs.hdfs.hdfssite'.
 #
 
-fs.hdfs.hadoopconf: /home/lauritz/hadoop-2.7.0/etc/hadoop
+fs.hdfs.hadoopconf: /home/bbdc/hadoop-2.7.0/etc/hadoop

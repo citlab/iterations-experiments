@@ -11,7 +11,7 @@
     </property>
     <property>
         <name>hadoop.tmp.dir</name>
-        <value>/data/lauritz/tmp</value>
+        <value>/data/bbdc/tmp</value>
     </property>
     <property>
         <name>io.file.buffer.size</name>

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /home/lauritz/flink/
+cd /home/bbdc/flink/
 
 HDFS_KMEANS_POINTS=/kmeans/points
 HDFS_KMEANS_CENTERS=/kmeans/centers

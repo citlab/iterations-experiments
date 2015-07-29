@@ -11,7 +11,7 @@
     </property>
     <property>
         <name>dfs.data.dir</name>
-        <value>/data/lauritz/hdfs/data</value>
+        <value>/data/bbdc/hdfs/data</value>
     </property>
     <property>
         <name>dfs.datanode.address</name>
@@ -31,7 +31,7 @@
     </property>
     <property>
         <name>dfs.name.dir</name>
-        <value>/data/lauritz/hdfs/name</value>
+        <value>/data/bbdc/hdfs/name</value>
     </property>
     <property>
         <name>dfs.namenode.safemode.extension</name>

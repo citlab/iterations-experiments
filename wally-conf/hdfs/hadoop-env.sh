@@ -46,7 +46,7 @@ done
 #export HADOOP_NAMENODE_INIT_HEAPSIZE=""
 
 # Extra Java runtime options.  Empty by default.
-export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=/home/lauritz/hadoop-2.7.0/lib"
+export HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=/home/bbdc/hadoop-2.7.0/lib"
 export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true"
 
 # Command specific options appended to HADOOP_OPTS when specified
@@ -70,7 +70,7 @@ export HADOOP_CLIENT_OPTS="-Xmx512m $HADOOP_CLIENT_OPTS"
 export HADOOP_SECURE_DN_USER=${HADOOP_SECURE_DN_USER}
 
 # Where log files are stored.  $HADOOP_HOME/logs by default.
-export HADOOP_LOG_DIR=/data/lauritz/hdfs/logs
+export HADOOP_LOG_DIR=/data/bbdc/hdfs/logs
 
 # Where log files are stored in the secure data environment.
 export HADOOP_SECURE_DN_LOG_DIR=${HADOOP_LOG_DIR}/${HADOOP_HDFS_USER}

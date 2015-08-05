@@ -2,6 +2,14 @@
 
 HOSTS=/home/bbdc/repos/adaptive-iterations/wally-conf/slaves
 
+if [ -z "$1" ]; then
+    LOG_FOLDER="$1"
+else
+    TIME=`date +%Y_%m_%d_%H_%M`
+    LOG_FOLDER=/data/bbdc/dstat/${TIME}
+    mkdir -p $LOG_FOLDER
+fi
+
 pssh -h $HOSTS "/home/bbdc/repos/adaptive-iterations/experiments/dstat-stop.sh"
 
 #log analyser
@@ -18,10 +26,6 @@ getArray() {
 }
 
 getArray $HOSTS
-
-TIME=`date +%Y_%m_%d_%H_%M`
-LOG_FOLDER=/data/bbdc/dstat/${TIME}
-mkdir $LOG_FOLDER
 
 for host in "${array[@]}"
         do 

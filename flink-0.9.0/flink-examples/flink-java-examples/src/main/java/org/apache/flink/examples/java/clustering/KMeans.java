@@ -25,13 +25,22 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
+import org.apache.flink.api.java.hadoop.mapred.HadoopOutputFormat;
+import org.apache.flink.api.java.io.TextOutputFormat;
+import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.core.fs.FileSystem;
+import org.apache.flink.core.fs.Path;
 import org.apache.flink.examples.java.clustering.util.KMeansData;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.IterativeDataSet;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapred.JobConf;
+
+import javax.xml.soap.Text;
 
 /**
  * This example implements a basic K-Means clustering algorithm.
@@ -86,42 +95,47 @@ public class KMeans {
 		if(!parseParameters(args)) {
 			return;
 		}
-	
+
+
+
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		
+		DataSet<Tuple3<Integer,Double,Double>> centroidsPrint = null;
+
 		// get input data
 		DataSet<Point> points = getPointDataSet(env);
-		DataSet<Centroid> centroids = getCentroidDataSet(env);
-		
-		// set number of bulk iterations for KMeans algorithm
-		IterativeDataSet<Centroid> loop = centroids.iterate(numIterations);
-		
-		DataSet<Centroid> newCentroids = points
-			// compute closest centroid for each point
-			.map(new SelectNearestCenter()).withBroadcastSet(loop, "centroids")
-			// count and sum point coordinates for each centroid
-			.map(new CountAppender())
-			.groupBy(0).reduce(new CentroidAccumulator())
-			// compute new centroids from point counts and coordinate sums
-			.map(new CentroidAverager());
-		
-		// feed new centroids back into next iteration
-		DataSet<Centroid> finalCentroids = loop.closeWith(newCentroids);
-		
+		DataSet<Centroid> centroids = null;
+
+		for(int i = 0; i < 1; i++) {
+			centroids = getCentroidDataSet(env);
+			centroids = points
+					// compute closest centroid for each point
+					.map(new SelectNearestCenter()).withBroadcastSet(centroids, "centroids")
+							// count and sum point coordinates for each centroid
+					.map(new CountAppender())
+					.groupBy(0).reduce(new CentroidAccumulator())
+							// compute new centroids from point counts and coordinate sums
+					.map(new CentroidAverager()).setParallelism(1);
+
+			centroidsPrint = centroids.map(new CentroidTupleConverter());
+			//centroidsPrint.print();
+			centroidsPrint.writeAsCsv("hdfs://localhost:9000/out2", "\n", " ", FileSystem.WriteMode.OVERWRITE);
+			//env.execute("KMeans Example");
+		}
+
 		DataSet<Tuple2<Integer, Point>> clusteredPoints = points
 				// assign points to final clusters
-				.map(new SelectNearestCenter()).withBroadcastSet(finalCentroids, "centroids");
-		
+				.map(new SelectNearestCenter()).withBroadcastSet(centroids, "centroids");
+
 		// emit result
 		if (fileOutput) {
-			clusteredPoints.writeAsCsv(outputPath, "\n", " ");
+			clusteredPoints.writeAsCsv(outputPath, "\n", " ",FileSystem.WriteMode.OVERWRITE);
 
 			// since file sinks are lazy, we trigger the execution explicitly
 			env.execute("KMeans Example");
 		}
 		else {
-			clusteredPoints.print();
+			centroids.print();
 		}
 	}
 	
@@ -340,5 +354,14 @@ public class KMeans {
 			return KMeansData.getDefaultCentroidDataSet(env);
 		}
 	}
-		
+
+	/** Converts a Centroid into a Tuple3<Integer, Double,Double> */
+	//@ForwardedFields("0->id; 1->x; 2->y")
+	public static final class CentroidTupleConverter implements MapFunction<Centroid,Tuple3<Integer,Double,Double>> {
+
+		@Override
+		public Tuple3<Integer,Double,Double> map(Centroid t) throws Exception {
+			return new Tuple3<Integer,Double,Double>(t.id,t.x,t.y);
+		}
+	}
 }

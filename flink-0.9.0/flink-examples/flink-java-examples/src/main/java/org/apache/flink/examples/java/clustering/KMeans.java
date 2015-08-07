@@ -27,9 +27,12 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
 import org.apache.flink.api.java.hadoop.mapred.HadoopOutputFormat;
 import org.apache.flink.api.java.io.TextOutputFormat;
+import org.apache.flink.api.java.io.TypeSerializerInputFormat;
+import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
@@ -96,18 +99,20 @@ public class KMeans {
 			return;
 		}
 
-
+		//path to Input/Output
+		String path = "hdfs://localhost:9000/out";
 
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		DataSet<Tuple3<Integer,Double,Double>> centroidsPrint = null;
 
 		// get input data
 		DataSet<Point> points = getPointDataSet(env);
-		DataSet<Centroid> centroids = null;
+		DataSet<Centroid> centroids = getCentroidDataSet(env);
 
-		for(int i = 0; i < 1; i++) {
-			centroids = getCentroidDataSet(env);
+		// format to convert centroids to to print with TypeSerializer
+		DataSet<Tuple3<Integer,Double,Double>> centroidsPrint = null;
+
+		for(int i = 0; i < numIterations; i++) {
 			centroids = points
 					// compute closest centroid for each point
 					.map(new SelectNearestCenter()).withBroadcastSet(centroids, "centroids")
@@ -115,12 +120,16 @@ public class KMeans {
 					.map(new CountAppender())
 					.groupBy(0).reduce(new CentroidAccumulator())
 							// compute new centroids from point counts and coordinate sums
-					.map(new CentroidAverager()).setParallelism(1);
+					.map(new CentroidAverager());
 
 			centroidsPrint = centroids.map(new CentroidTupleConverter());
-			//centroidsPrint.print();
-			centroidsPrint.writeAsCsv("hdfs://localhost:9000/out2", "\n", " ", FileSystem.WriteMode.OVERWRITE);
-			//env.execute("KMeans Example");
+			//Write out with TypeSerializer()
+			centroidsPrint.write(new TypeSerializerOutputFormat<Tuple3<Integer, Double, Double>>(), (path + Integer.toString(i) + "_typeSer"), FileSystem.WriteMode.OVERWRITE);
+			env.execute("KMeans Example");
+
+			//Read in with TypeSerializer
+			centroids = env.readFile(new TypeSerializerInputFormat(TupleTypeInfo.getBasicTupleTypeInfo(Integer.class, Double.class, Double.class)), (path + Integer.toString(i) + "_typeSer"))
+							.map(new TupleCentroidConverter());
 		}
 
 		DataSet<Tuple2<Integer, Point>> clusteredPoints = points

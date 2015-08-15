@@ -399,6 +399,12 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
           case None =>
             log.debug(s"Cannot find task $taskExecutionId to respond with partition state.")
         }
+
+      case IterationDone() =>
+        val cpuReport: TaskMessage = CpuReport(metricRegistryMapper.writeValueAsBytes(metricRegistry))
+        currentJobManager foreach {
+          jm => jm ! cpuReport
+        }
     }
   }
 

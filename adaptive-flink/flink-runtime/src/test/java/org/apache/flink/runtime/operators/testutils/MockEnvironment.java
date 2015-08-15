@@ -259,6 +259,11 @@ public class MockEnvironment implements Environment {
 	}
 
 	@Override
+	public void iterationDone() {
+		// discard, this is only for testing
+	}
+
+	@Override
 	public void reportAccumulators(Map<String, Accumulator<?, ?>> accumulators) {
 		// discard, this is only for testing
 	}

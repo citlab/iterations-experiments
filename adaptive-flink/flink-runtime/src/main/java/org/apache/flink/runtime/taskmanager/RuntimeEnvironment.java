@@ -34,6 +34,7 @@ import org.apache.flink.runtime.io.network.partition.consumer.InputGate;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobgraph.tasks.InputSplitProvider;
 import org.apache.flink.runtime.memorymanager.MemoryManager;
+import org.apache.flink.runtime.messages.TaskMessages;
 import org.apache.flink.runtime.messages.accumulators.ReportAccumulatorResult;
 import org.apache.flink.runtime.messages.checkpoint.AcknowledgeCheckpoint;
 import org.apache.flink.runtime.state.StateHandle;
@@ -76,7 +77,8 @@ public class RuntimeEnvironment implements Environment {
 	private final InputGate[] inputGates;
 	
 	private final ActorRef jobManagerActor;
-	
+	private final ActorRef taskManagerActor;
+
 	// ------------------------------------------------------------------------
 
 	public RuntimeEnvironment(JobID jobId, JobVertexID jobVertexId, ExecutionAttemptID executionId,
@@ -90,10 +92,9 @@ public class RuntimeEnvironment implements Environment {
 								Map<String, Future<Path>> distCacheEntries,
 								ResultPartitionWriter[] writers,
 								InputGate[] inputGates,
-								ActorRef jobManagerActor) {
-		
+								ActorRef jobManagerActor, ActorRef taskManagerActor) {
 		checkArgument(parallelism > 0 && subtaskIndex >= 0 && subtaskIndex < parallelism);
-		
+
 		this.jobId = checkNotNull(jobId);
 		this.jobVertexId = checkNotNull(jobVertexId);
 		this.executionId = checkNotNull(executionId);
@@ -112,6 +113,7 @@ public class RuntimeEnvironment implements Environment {
 		this.writers = checkNotNull(writers);
 		this.inputGates = checkNotNull(inputGates);
 		this.jobManagerActor = checkNotNull(jobManagerActor);
+		this.taskManagerActor = checkNotNull(taskManagerActor);
 	}
 
 
@@ -247,5 +249,10 @@ public class RuntimeEnvironment implements Environment {
 		
 		AcknowledgeCheckpoint message = new AcknowledgeCheckpoint(jobId, executionId, checkpointId, serializedState);
 		jobManagerActor.tell(message, ActorRef.noSender());
+	}
+
+	@Override
+	public void iterationDone() {
+		taskManagerActor.tell(new TaskMessages.IterationDone(), ActorRef.noSender());
 	}
 }

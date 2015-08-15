@@ -35,7 +35,7 @@ import org.apache.flink.runtime.jobmanager.web.WebInfoServer
 import org.apache.flink.runtime.messages.ArchiveMessages.ArchiveExecutionGraph
 import org.apache.flink.runtime.messages.ExecutionGraphMessages.JobStatusChanged
 import org.apache.flink.runtime.messages.Messages.{Disconnect, Acknowledge}
-import org.apache.flink.runtime.messages.TaskMessages.{PartitionState, UpdateTaskExecutionState}
+import org.apache.flink.runtime.messages.TaskMessages.{CpuReport, PartitionState, UpdateTaskExecutionState}
 import org.apache.flink.runtime.messages.accumulators._
 import org.apache.flink.runtime.messages.checkpoint.{AcknowledgeCheckpoint, AbstractCheckpointMessage}
 import org.apache.flink.runtime.process.ProcessReaper
@@ -407,6 +407,10 @@ class JobManager(protected val flinkConfiguration: Configuration,
       } catch {
         case t: Throwable => log.error(s"Could not report heart beat from ${sender().path}.", t)
       }
+
+    case CpuReport(report) =>
+      log.info(s"Received CPU report")
+      // TODO log reported info: average, min, max, median
 
     case message: AccumulatorMessage => handleAccumulatorMessage(message)
 

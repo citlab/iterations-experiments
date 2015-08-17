@@ -17,7 +17,7 @@
  */
 
 
-package org.apache.flink.examples.java.multijobexamples;
+package de.tuberlin.cit.experiments.iterations.flink.nativeiterations;
 
 import org.apache.flink.api.common.ProgramDescription;
 import org.apache.flink.api.common.functions.*;
@@ -26,8 +26,6 @@ import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsFirst;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsSecond;
-import org.apache.flink.api.java.io.TypeSerializerInputFormat;
-import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.record.functions.FunctionAnnotation;
 import org.apache.flink.api.java.tuple.Tuple1;
@@ -43,19 +41,19 @@ import java.util.Iterator;
 
 /**
  * An implementation of the connected components algorithm, using a delta iteration.
- *
+ * 
  * <p>
  * Initially, the algorithm assigns each vertex an unique ID. In each step, a vertex picks the minimum of its own ID and its
  * neighbors' IDs, as its new ID and tells its neighbors about its new ID. After the algorithm has completed, all vertices in the
  * same component will have the same ID.
- *
+ * 
  * <p>
  * A vertex whose component ID did not change needs not propagate its information in the next step. Because of that,
  * the algorithm is easily expressible via a delta iteration. We here model the solution set as the vertices with
  * their current component ids, and the workset as the changed vertices. Because we see all vertices initially as
  * changed, the initial workset and the initial solution set are identical. Also, the delta to the solution set
  * is consequently also the next workset.<br>
- *
+ * 
  * <p>
  * Input files are plain text files and must be formatted as follows:
  * <ul>
@@ -65,11 +63,11 @@ import java.util.Iterator;
  * characters. Edges are separated by new-line characters.<br>
  * For example <code>"1 2\n2 12\n1 12\n42 63"</code> gives four (undirected) edges (1)-(2), (2)-(12), (1)-(12), and (42)-(63).
  * </ul>
- *
+ * 
  * <p>
  * Usage: <code>ConnectedComponents &lt;vertices path&gt; &lt;edges path&gt; &lt;result path&gt; &lt;max number of iterations&gt;</code><br>
  * If no parameters are provided, the program is run with default data from {@link ConnectedComponentsData} and 10 iterations. 
- *
+ * 
  * <p>
  * This example shows how to use:
  * <ul>
@@ -79,13 +77,13 @@ import java.util.Iterator;
  */
 @SuppressWarnings("serial")
 public class ConnectedComponents implements ProgramDescription {
-
+	
 	// *************************************************************************
 	//     PROGRAM
 	// *************************************************************************
-
+	
 	public static void main(String... args) throws Exception {
-
+		
 		if(!parseParameters(args)) {
 			return;
 		}
@@ -100,47 +98,34 @@ public class ConnectedComponents implements ProgramDescription {
 
 		// assign the initial components (equal to the vertex id)
 		DataSet<Tuple2<Integer, Integer>> verticesWithInitialId = edges2.groupBy(0).reduceGroup(new InitialValue());
-		DataSet<Tuple2<Integer, Integer>> delta = verticesWithInitialId;
-		DataSet<Tuple2<Integer, Integer>> newSolutionSet = verticesWithInitialId;
 
-		//Run Connected Components for maxIterations
-		for(int i = 0; i < maxIterations; i++){
-			//read in files
-			if(i > 0){
-				//Read in parameters
-				delta = env.readFile(new TypeSerializerInputFormat<Tuple2<Integer, Integer>>((delta.getType())),
-						(intermediateResultsPath + "/iteration_delta_" + Integer.toString(i - 1)));
-				newSolutionSet = env.readFile(new TypeSerializerInputFormat<Tuple2<Integer, Integer>>((newSolutionSet.getType())),
-						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i - 1)));
-			}
+		IterativeDataSet<Tuple2<Integer, Integer>> solutionSet = verticesWithInitialId.iterate(maxIterations);
+		// apply the step logic: join with the edges, select the minimum neighbor, update if the
+		// component of the candidate is smaller
+		DataSet<Tuple2<Integer, Integer>> delta =
+				solutionSet.join(edges, JoinOperatorBase.JoinHint.REPARTITION_HASH_FIRST)
+						.where(0)
+						.equalTo(0)
+						.with(new NeighborWithComponentIDJoin())
+						.groupBy(0)
+						.aggregate(Aggregations.MIN, 1)
+						.join(solutionSet)
+						.where(0)
+						.equalTo(0)
+						.with(new ComponentIdFilter());
 
-			// apply the step logic: join with the edges, select the minimum neighbor, update if the
-			// component of the candidate is smaller
-			delta = delta.join(edges, JoinOperatorBase.JoinHint.REPARTITION_HASH_FIRST)
-					.where(0)
-					.equalTo(0)
-					.with(new NeighborWithComponentIDJoin())
-					.groupBy(0)
-					.aggregate(Aggregations.MIN, 1)
-					.join(newSolutionSet)
-					.where(0)
-					.equalTo(0)
-					.with(new ComponentIdFilter());
 
-			newSolutionSet = newSolutionSet.coGroup(delta).where(0).equalTo(0).with(new UpdateSolutionSet());
 
-			//Write out for next iteration
-			if(i != maxIterations -1) {
-				delta.write(new TypeSerializerOutputFormat<Tuple2<Integer, Integer>>(),
-						(intermediateResultsPath + "/iteration_delta_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
-				newSolutionSet.write(new TypeSerializerOutputFormat<Tuple2<Integer, Integer>>(),
-						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
-				env.execute("Connected Components Bulk Iteration");
-			}
-		}
+
+
+
+		DataSet<Tuple2<Integer, Integer>> newSolutionSet = solutionSet.coGroup(delta).where(0).equalTo(0).with(new UpdateSolutionSet());
+
+		// close the delta iteration (delta and new workset are identical)
+		DataSet<Tuple2<Integer, Integer>> result = solutionSet.closeWith(newSolutionSet, delta);
 
 		// emit result
-		newSolutionSet.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
+		result.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
 		// execute program
 		try {
@@ -149,78 +134,80 @@ public class ConnectedComponents implements ProgramDescription {
 			e.printStackTrace();
 		}
 	}
-
+	
 	// *************************************************************************
 	//     USER FUNCTIONS
 	// *************************************************************************
-
+	
 	/**
 	 * Function that turns a value into a 2-tuple where both fields are that value.
 	 */
 	@ForwardedFields("*->f0")
 	public static final class DuplicateValue<T> implements MapFunction<T, Tuple2<T, T>> {
-
+		
 		@Override
 		public Tuple2<T, T> map(T vertex) {
 			return new Tuple2<T, T>(vertex, vertex);
 		}
 	}
+	
+
+
+
 
 	@Override
 	public String getDescription() {
 		return "Parameters: <vertices-path> <edges-path> <result-path> <max-number-of-iterations>";
 	}
-
+	
 	// *************************************************************************
 	//     UTIL METHODS
 	// *************************************************************************
-
+	
 	private static boolean fileOutput = false;
 	private static String verticesPath = null;
 	private static String edgesPath = null;
 	private static String outputPath = null;
 	private static int maxIterations = 10;
-	private static String intermediateResultsPath = null;
+	
 	private static boolean parseParameters(String[] programArguments) {
-
+		
 		if(programArguments.length > 0) {
 			// parse input arguments
 			fileOutput = true;
 			if(programArguments.length == 4) {
-				edgesPath = programArguments[0];
-				outputPath = programArguments[1];
-				maxIterations = Integer.parseInt(programArguments[2]);
-				intermediateResultsPath = programArguments[3];
+				verticesPath = programArguments[0];
+				edgesPath = programArguments[1];
+				outputPath = programArguments[2];
+				maxIterations = Integer.parseInt(programArguments[3]);
 			} else {
-				System.err.println("Usage: ConnectedComponents <edges path> " +
-						"<result path> <max number of iterations> <intermediate results path>");
+				System.err.println("Usage: ConnectedComponents <vertices path> <edges path> <result path> <max number of iterations>");
 				return false;
 			}
 		} else {
 			System.out.println("Executing Connected Components example with default parameters and built-in default data.");
 			System.out.println("  Provide parameters to read input data from files.");
 			System.out.println("  See the documentation for the correct format of input files.");
-			System.out.println("  Usage: ConnectedComponents <edges path> " +
-					"<result path> <max number of iterations> <intermediate results path>");
+			System.out.println("  Usage: ConnectedComponents <vertices path> <edges path> <result path> <max number of iterations>");
 		}
 		return true;
 	}
-
+	
 	private static DataSet<Long> getVertexDataSet(ExecutionEnvironment env) {
-
+		
 		if(fileOutput) {
 			return env.readCsvFile(verticesPath).types(Long.class)
-					.map(
-							new MapFunction<Tuple1<Long>, Long>() {
-								public Long map(Tuple1<Long> value) { return value.f0; }
-							});
+						.map(
+								new MapFunction<Tuple1<Long>, Long>() {
+									public Long map(Tuple1<Long> value) { return value.f0; }
+								});
 		} else {
 			return ConnectedComponentsData.getDefaultVertexDataSet(env);
 		}
 	}
-
+	
 	private static DataSet<Tuple2<Long, Long>> getEdgeDataSet(ExecutionEnvironment env) {
-
+		
 		if(fileOutput) {
 			return env.readCsvFile(edgesPath).fieldDelimiter(" ").types(Long.class, Long.class);
 		} else {

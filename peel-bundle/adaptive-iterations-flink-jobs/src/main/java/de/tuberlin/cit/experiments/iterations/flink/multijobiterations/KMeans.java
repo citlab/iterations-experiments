@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.examples.java.multijobexamples;
+package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import java.util.Collection;
 

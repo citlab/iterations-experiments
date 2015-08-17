@@ -17,23 +17,21 @@
  */
 
 
-package org.apache.flink.examples.java.multijobexamples;
+package de.tuberlin.cit.experiments.iterations.flink.nativeiterations;
 
-import org.apache.flink.examples.java.ml.util.*;
+import java.io.Serializable;
+import java.util.Collection;
+
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
-import org.apache.flink.api.java.io.TypeSerializerInputFormat;
-import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.examples.java.ml.util.LinearRegressionData;
-
-import java.util.Collection;
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.operators.IterativeDataSet;
 
 /**
  * This example implements a basic Linear Regression  to solve the y = theta0 + theta1*x problem using batch gradient descent algorithm.
@@ -73,8 +71,6 @@ public class LinearRegression {
 	//     PROGRAM
 	// *************************************************************************
 
-
-
 	public static void main(String[] args) throws Exception{
 
 		if(!parseParameters(args)) {
@@ -82,6 +78,7 @@ public class LinearRegression {
 		}
 
 		// set up execution environment
+
 		final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
 		// get input x data from elements
@@ -90,39 +87,97 @@ public class LinearRegression {
 		// get the parameters from elements
 		DataSet<Params> parameters = getParamsDataSet(env);
 
-		for(int i = 0; i < numIterations; i++){
+		// set number of bulk iterations for SGD linear Regression
+		IterativeDataSet<Params> loop = parameters.iterate(numIterations);
 
-			//Read in parameters
-			if(i > 0) parameters = env.readFile(new TypeSerializerInputFormat<Params>((parameters.getType())),
-					(intermediateResultsPath + "/iteration_" + Integer.toString(i-1)));
+		DataSet<Params> new_parameters = data
+				// compute a single step using every sample
+				.map(new SubUpdate()).withBroadcastSet(loop, "parameters")
+				// sum up all the steps
+				.reduce(new UpdateAccumulator())
+				// average the steps and update all parameters
+				.map(new Update());
 
-			parameters = data
-					// compute a single step using every sample
-					.map(new SubUpdate()).withBroadcastSet(parameters, "parameters")
-							// sum up all the steps
-					.reduce(new UpdateAccumulator())
-							// average the steps and update all parameters
-					.map(new Update());
-
-			//Write out with TypeSerializer()
-			if(i != numIterations-1) {
-				parameters.write(new TypeSerializerOutputFormat<Params>(),
-						(intermediateResultsPath + "/iteration_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
-				env.execute("Linear Regression example");
-			}
-		}
-
+		// feed new parameters back into next iteration
+		DataSet<Params> result = loop.closeWith(new_parameters);
 
 		// emit result
 		if(fileOutput) {
-			parameters.writeAsText(outputPath,FileSystem.WriteMode.OVERWRITE);
+			result.writeAsText(outputPath);
 			// execute program
 			env.execute("Linear Regression example");
 		} else {
-			parameters.print();
+			result.print();
 		}
 	}
-	
+
+	// *************************************************************************
+	//     DATA TYPES
+	// *************************************************************************
+
+	/**
+	 * A simple data sample, x means the input, and y means the target.
+	 */
+	public static class Data implements Serializable{
+		public double x,y;
+
+		public Data() {};
+
+		public Data(double x ,double y){
+			this.x = x;
+			this.y = y;
+		}
+
+		@Override
+		public String toString() {
+			return "(" + x + "|" + y + ")";
+		}
+
+	}
+
+	/**
+	 * A set of parameters -- theta0, theta1.
+	 */
+	public static class Params implements Serializable{
+
+		private double theta0,theta1;
+
+		public Params(){};
+
+		public Params(double x0, double x1){
+			this.theta0 = x0;
+			this.theta1 = x1;
+		}
+
+		@Override
+		public String toString() {
+			return theta0 + " " + theta1;
+		}
+
+		public double getTheta0() {
+			return theta0;
+		}
+
+		public double getTheta1() {
+			return theta1;
+		}
+
+		public void setTheta0(double theta0) {
+			this.theta0 = theta0;
+		}
+
+		public void setTheta1(double theta1) {
+			this.theta1 = theta1;
+		}
+
+		public Params div(Integer a){
+			this.theta0 = theta0 / a ;
+			this.theta1 = theta1 / a ;
+			return this;
+		}
+
+	}
+
 	// *************************************************************************
 	//     USER FUNCTIONS
 	// *************************************************************************
@@ -171,8 +226,8 @@ public class LinearRegression {
 				this.parameter = p; 
 			}
 
-			double theta_0 = parameter.getTheta0() - 0.01*((parameter.getTheta0() + (parameter.getTheta1()*in.x)) - in.y);
-			double theta_1 = parameter.getTheta1() - 0.01*(((parameter.getTheta0() + (parameter.getTheta1()*in.x)) - in.y) * in.x);
+			double theta_0 = parameter.theta0 - 0.01*((parameter.theta0 + (parameter.theta1*in.x)) - in.y);
+			double theta_1 = parameter.theta1 - 0.01*(((parameter.theta0 + (parameter.theta1*in.x)) - in.y) * in.x);
 
 			return new Tuple2<Params,Integer>(new Params(theta_0,theta_1),count);
 		}
@@ -186,8 +241,8 @@ public class LinearRegression {
 		@Override
 		public Tuple2<Params, Integer> reduce(Tuple2<Params, Integer> val1, Tuple2<Params, Integer> val2) {
 
-			double new_theta0 = val1.f0.getTheta0() + val2.f0.getTheta0();
-			double new_theta1 = val1.f0.getTheta1() + val2.f0.getTheta1();
+			double new_theta0 = val1.f0.theta0 + val2.f0.theta0;
+			double new_theta1 = val1.f0.theta1 + val2.f0.theta1;
 			Params result = new Params(new_theta0,new_theta1);
 			return new Tuple2<Params, Integer>( result, val1.f1 + val2.f1);
 
@@ -215,20 +270,18 @@ public class LinearRegression {
 	private static String dataPath = null;
 	private static String outputPath = null;
 	private static int numIterations = 10;
-	private static String intermediateResultsPath = null;
 
 	private static boolean parseParameters(String[] programArguments) {
 
 		if(programArguments.length > 0) {
 			// parse input arguments
 			fileOutput = true;
-			if(programArguments.length == 4) {
+			if(programArguments.length == 3) {
 				dataPath = programArguments[0];
 				outputPath = programArguments[1];
 				numIterations = Integer.parseInt(programArguments[2]);
-				intermediateResultsPath = programArguments[3];
 			} else {
-				System.err.println("Usage: LinearRegression <data path> <result path> <num iterations> <path intermediate results>");
+				System.err.println("Usage: LinearRegression <data path> <result path> <num iterations>");
 				return false;
 			}
 		} else {
@@ -236,7 +289,7 @@ public class LinearRegression {
 			System.out.println("  Provide parameters to read input data from files.");
 			System.out.println("  See the documentation for the correct format of input files.");
 			System.out.println("  We provide a data generator to create synthetic input files for this program.");
-			System.out.println("  Usage: LinearRegression <data path> <result path> <num iterations> <path intermediate results>");
+			System.out.println("  Usage: LinearRegression <data path> <result path> <num iterations>");
 		}
 		return true;
 	}

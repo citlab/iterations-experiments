@@ -1,0 +1,26 @@
+products:
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> adaptive-iterations-flink-jobs/target/classes/de/tuberlin/cit/experiments/iterations/flink/Wordcount$$anon$2$$anon$1.class
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> adaptive-iterations-flink-jobs/target/classes/de/tuberlin/cit/experiments/iterations/flink/Wordcount$$anon$2$$anonfun$createSerializer$1.class
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> adaptive-iterations-flink-jobs/target/classes/de/tuberlin/cit/experiments/iterations/flink/Wordcount$$anon$2.class
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> adaptive-iterations-flink-jobs/target/classes/de/tuberlin/cit/experiments/iterations/flink/Wordcount$$anonfun$1.class
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> adaptive-iterations-flink-jobs/target/classes/de/tuberlin/cit/experiments/iterations/flink/Wordcount$$anonfun$2.class
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> adaptive-iterations-flink-jobs/target/classes/de/tuberlin/cit/experiments/iterations/flink/Wordcount$.class
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> adaptive-iterations-flink-jobs/target/classes/de/tuberlin/cit/experiments/iterations/flink/Wordcount.class
+binary dependencies:
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> /Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home/jre/lib/rt.jar
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> /Users/lauritz/.m2/repository/org/apache/flink/flink-core/0.9.0/flink-core-0.9.0.jar
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> /Users/lauritz/.m2/repository/org/apache/flink/flink-java/0.9.0/flink-java-0.9.0.jar
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> /Users/lauritz/.m2/repository/org/apache/flink/flink-scala/0.9.0/flink-scala-0.9.0.jar
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> /Users/lauritz/.m2/repository/org/scala-lang/scala-library/2.10.4/scala-library-2.10.4.jar
+source dependencies:
+
+external dependencies:
+
+class names:
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> de.tuberlin.cit.experiments.iterations.flink.Wordcount
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> de.tuberlin.cit.experiments.iterations.flink.Wordcount$
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> de.tuberlin.cit.experiments.iterations.flink.Wordcount$$anon$2
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> de.tuberlin.cit.experiments.iterations.flink.Wordcount$$anon$2$$anon$1
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> de.tuberlin.cit.experiments.iterations.flink.Wordcount$$anon$2$$anonfun$createSerializer$1
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> de.tuberlin.cit.experiments.iterations.flink.Wordcount$$anonfun$1
+   adaptive-iterations-flink-jobs/src/main/scala/de/tuberlin/cit/experiments/iterations/flink/Wordcount.scala -> de.tuberlin.cit.experiments.iterations.flink.Wordcount$$anonfun$2

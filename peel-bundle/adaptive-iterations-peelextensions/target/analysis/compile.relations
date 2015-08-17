@@ -1,0 +1,27 @@
+products:
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> adaptive-iterations-peelextensions/target/classes/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes$$anonfun$1.class
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> adaptive-iterations-peelextensions/target/classes/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes$$anonfun$2.class
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> adaptive-iterations-peelextensions/target/classes/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes$$anonfun$3.class
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> adaptive-iterations-peelextensions/target/classes/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes$$anonfun$run$1.class
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> adaptive-iterations-peelextensions/target/classes/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes$$anonfun$run$2.class
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> adaptive-iterations-peelextensions/target/classes/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.class
+binary dependencies:
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home/jre/lib/rt.jar
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Users/lauritz/.m2/repository/com/typesafe/config/1.2.1/config-1.2.1.jar
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Users/lauritz/.m2/repository/com/typesafe/play/anorm_2.10/2.4.0/anorm_2.10-2.4.0.jar
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Users/lauritz/.m2/repository/net/sourceforge/argparse4j/argparse4j/0.6.0/argparse4j-0.6.0.jar
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Users/lauritz/.m2/repository/org/peelframework/peel-core/1.0-SNAPSHOT/peel-core-1.0-SNAPSHOT.jar
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Users/lauritz/.m2/repository/org/scala-lang/scala-library/2.10.5/scala-library-2.10.5.jar
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Users/lauritz/.m2/repository/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> /Users/lauritz/.m2/repository/org/springframework/spring-context/4.0.5.RELEASE/spring-context-4.0.5.RELEASE.jar
+source dependencies:
+
+external dependencies:
+
+class names:
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> de.tuberlin.cit.experiments.iterations.cli.command.QueryRuntimes
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> de.tuberlin.cit.experiments.iterations.cli.command.QueryRuntimes$$anonfun$1
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> de.tuberlin.cit.experiments.iterations.cli.command.QueryRuntimes$$anonfun$2
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> de.tuberlin.cit.experiments.iterations.cli.command.QueryRuntimes$$anonfun$3
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> de.tuberlin.cit.experiments.iterations.cli.command.QueryRuntimes$$anonfun$run$1
+   adaptive-iterations-peelextensions/src/main/scala/de/tuberlin/cit/experiments/iterations/cli/command/QueryRuntimes.scala -> de.tuberlin.cit.experiments.iterations.cli.command.QueryRuntimes$$anonfun$run$2

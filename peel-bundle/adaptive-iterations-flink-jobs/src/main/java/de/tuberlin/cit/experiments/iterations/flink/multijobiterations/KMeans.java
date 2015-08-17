@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.examples.java.multijobexamples;
+package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import java.util.Collection;
 
@@ -32,9 +32,11 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.examples.java.clustering.util.KMeansData;
-import org.apache.flink.examples.java.clustering.util.Point;
-import org.apache.flink.examples.java.clustering.util.Centroid;
+
+import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Centroid;
+import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Point;
+
+
 /**
  * This example implements a basic K-Means clustering algorithm.
  *
@@ -66,7 +68,7 @@ import org.apache.flink.examples.java.clustering.util.Centroid;
  *
  * <p>
  * Usage: <code>KMeans &lt;points path&gt; &lt;centers path&gt; &lt;result path&gt; &lt;num iterations&gt;</code><br>
- * If no parameters are provided, the program is run with default data from {@link KMeansData} and 10 iterations.
+ * If no parameters are provided, the program is run with 10 iterations.
  *
  * <p>
  * This example shows how to use:
@@ -100,7 +102,7 @@ public class KMeans {
 
 			//Read in for next Iteration with typeSerializer()
 			if(i != 0) {
-				centroids = env.readFile(new TypeSerializerInputFormat<Centroid>((centroids.getType())),
+				centroids = env.readFile(new TypeSerializerInputFormat<>((centroids.getType())),
 						(intermediateResultsPath + "/iteration_" + Integer.toString(i - 1)));
 			}
 			centroids = points
@@ -126,15 +128,10 @@ public class KMeans {
 				.map(new SelectNearestCenter()).withBroadcastSet(centroids, "centroids");
 
 		// emit result
-		if (fileOutput) {
-			clusteredPoints.writeAsCsv(outputPath, "\n", " ",FileSystem.WriteMode.OVERWRITE);
+		clusteredPoints.writeAsCsv(outputPath, "\n", " ",FileSystem.WriteMode.OVERWRITE);
 
-			// since file sinks are lazy, we trigger the execution explicitly
-			env.execute("KMeans Example");
-		}
-		else {
-			centroids.print();
-		}
+		// since file sinks are lazy, we trigger the execution explicitly
+		env.execute("KMeans Example");
 	}
 
 
@@ -192,7 +189,7 @@ public class KMeans {
 			}
 
 			// emit a new record with the center id and the data point.
-			return new Tuple2<Integer, Point>(closestCentroidId, p);
+			return new Tuple2<>(closestCentroidId, p);
 		}
 	}
 
@@ -202,7 +199,7 @@ public class KMeans {
 
 		@Override
 		public Tuple3<Integer, Point, Long> map(Tuple2<Integer, Point> t) {
-			return new Tuple3<Integer, Point, Long>(t.f0, t.f1, 1L);
+			return new Tuple3<>(t.f0, t.f1, 1L);
 		}
 	}
 
@@ -212,7 +209,7 @@ public class KMeans {
 
 		@Override
 		public Tuple3<Integer, Point, Long> reduce(Tuple3<Integer, Point, Long> val1, Tuple3<Integer, Point, Long> val2) {
-			return new Tuple3<Integer, Point, Long>(val1.f0, val1.f1.add(val2.f1), val1.f2 + val2.f2);
+			return new Tuple3<>(val1.f0, val1.f1.add(val2.f1), val1.f2 + val2.f2);
 		}
 	}
 
@@ -230,7 +227,6 @@ public class KMeans {
 	//     UTIL METHODS
 	// *************************************************************************
 
-	private static boolean fileOutput = false;
 	private static String pointsPath = null;
 	private static String centersPath = null;
 	private static String outputPath = null;
@@ -239,53 +235,37 @@ public class KMeans {
 
 	private static boolean parseParameters(String[] programArguments) {
 
-		if(programArguments.length > 0) {
-			// parse input arguments
-			fileOutput = true;
-			if(programArguments.length == 5) {
-				pointsPath = programArguments[0];
-				centersPath = programArguments[1];
-				outputPath = programArguments[2];
-				numIterations = Integer.parseInt(programArguments[3]);
-				intermediateResultsPath = programArguments[4];
-			} else {
-				System.err.println("Usage: KMeans <points path> <centers path> " +
-						"<result path> <num iterations> <path intermediate results>");
-				return false;
-			}
+		// parse input arguments
+		if(programArguments.length == 5) {
+			pointsPath = programArguments[0];
+			centersPath = programArguments[1];
+			outputPath = programArguments[2];
+			numIterations = Integer.parseInt(programArguments[3]);
+			intermediateResultsPath = programArguments[4];
 		} else {
-			System.out.println("Executing K-Means example with default parameters and built-in default data.");
-			System.out.println("  Provide parameters to read input data from files.");
-			System.out.println("  See the documentation for the correct format of input files.");
-			System.out.println("  We provide a data generator to create synthetic input files for this program.");
-			System.out.println("  Usage: KMeans <points path> <centers path> " +
+			System.err.println("Usage: KMeans <points path> <centers path> " +
 					"<result path> <num iterations> <path intermediate results>");
+			return false;
 		}
+
 		return true;
 	}
 
 	private static DataSet<Point> getPointDataSet(ExecutionEnvironment env) {
-		if(fileOutput) {
-			// read points from CSV file
-			return env.readCsvFile(pointsPath)
-						.fieldDelimiter(" ")
-						.includeFields(true, true)
-						.types(Double.class, Double.class)
-						.map(new TuplePointConverter());
-		} else {
-			return KMeansData.getDefaultPointDataSet(env);
-		}
+		// read points from CSV file
+		return env.readCsvFile(pointsPath)
+				.fieldDelimiter(" ")
+				.includeFields(true, true)
+				.types(Double.class, Double.class)
+				.map(new TuplePointConverter());
+
 	}
 
 	private static DataSet<Centroid> getCentroidDataSet(ExecutionEnvironment env) {
-		if(fileOutput) {
-			return env.readCsvFile(centersPath)
-						.fieldDelimiter(" ")
-						.includeFields(true, true, true)
-						.types(Integer.class, Double.class, Double.class)
-						.map(new TupleCentroidConverter());
-		} else {
-			return KMeansData.getDefaultCentroidDataSet(env);
-		}
+		return env.readCsvFile(centersPath)
+				.fieldDelimiter(" ")
+				.includeFields(true, true, true)
+				.types(Integer.class, Double.class, Double.class)
+				.map(new TupleCentroidConverter());
 	}
 }

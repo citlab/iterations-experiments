@@ -1,6 +1,4 @@
-package org.apache.flink.examples.java.ml.util;
-
-import org.apache.flink.examples.java.ml.LinearRegression;
+package de.tuberlin.cit.experiments.iterations.flink.util.ml;
 
 import java.io.Serializable;
 
@@ -9,7 +7,7 @@ import java.io.Serializable;
  */
 public class Params implements Serializable {
 
-    private double theta0,theta1;
+    private double theta0, theta1;
 
     public Params(){};
 

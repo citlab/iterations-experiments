@@ -17,27 +17,21 @@
  */
 
 
-package org.apache.flink.examples.java.multijobexamples;
+package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import org.apache.flink.api.common.ProgramDescription;
 import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.common.operators.base.JoinOperatorBase;
 import org.apache.flink.api.java.aggregation.Aggregations;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsFirst;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsSecond;
 import org.apache.flink.api.java.io.TypeSerializerInputFormat;
 import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
-import org.apache.flink.api.java.operators.IterativeDataSet;
-import org.apache.flink.api.java.record.functions.FunctionAnnotation;
-import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.util.Collector;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.operators.DeltaIteration;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.examples.java.graph.util.ConnectedComponentsData;
 
 import java.util.Iterator;
 
@@ -68,7 +62,7 @@ import java.util.Iterator;
  *
  * <p>
  * Usage: <code>ConnectedComponents &lt;vertices path&gt; &lt;edges path&gt; &lt;result path&gt; &lt;max number of iterations&gt;</code><br>
- * If no parameters are provided, the program is run with default data from {@link ConnectedComponentsData} and 10 iterations. 
+ * If no parameters are provided, the program is run with 10 iterations.
  *
  * <p>
  * This example shows how to use:
@@ -108,9 +102,9 @@ public class ConnectedComponents implements ProgramDescription {
 			//read in files
 			if(i > 0){
 				//Read in parameters
-				delta = env.readFile(new TypeSerializerInputFormat<Tuple2<Integer, Integer>>((delta.getType())),
+				delta = env.readFile(new TypeSerializerInputFormat<>((delta.getType())),
 						(intermediateResultsPath + "/iteration_delta_" + Integer.toString(i - 1)));
-				newSolutionSet = env.readFile(new TypeSerializerInputFormat<Tuple2<Integer, Integer>>((newSolutionSet.getType())),
+				newSolutionSet = env.readFile(new TypeSerializerInputFormat<>((newSolutionSet.getType())),
 						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i - 1)));
 			}
 
@@ -154,18 +148,6 @@ public class ConnectedComponents implements ProgramDescription {
 	//     USER FUNCTIONS
 	// *************************************************************************
 
-	/**
-	 * Function that turns a value into a 2-tuple where both fields are that value.
-	 */
-	@ForwardedFields("*->f0")
-	public static final class DuplicateValue<T> implements MapFunction<T, Tuple2<T, T>> {
-
-		@Override
-		public Tuple2<T, T> map(T vertex) {
-			return new Tuple2<T, T>(vertex, vertex);
-		}
-	}
-
 	@Override
 	public String getDescription() {
 		return "Parameters: <vertices-path> <edges-path> <result-path> <max-number-of-iterations>";
@@ -175,60 +157,27 @@ public class ConnectedComponents implements ProgramDescription {
 	//     UTIL METHODS
 	// *************************************************************************
 
-	private static boolean fileOutput = false;
-	private static String verticesPath = null;
 	private static String edgesPath = null;
 	private static String outputPath = null;
 	private static int maxIterations = 10;
 	private static String intermediateResultsPath = null;
+
 	private static boolean parseParameters(String[] programArguments) {
 
-		if(programArguments.length > 0) {
-			// parse input arguments
-			fileOutput = true;
-			if(programArguments.length == 4) {
-				edgesPath = programArguments[0];
-				outputPath = programArguments[1];
-				maxIterations = Integer.parseInt(programArguments[2]);
-				intermediateResultsPath = programArguments[3];
-			} else {
-				System.err.println("Usage: ConnectedComponents <edges path> " +
-						"<result path> <max number of iterations> <intermediate results path>");
-				return false;
-			}
+		// parse input arguments
+		if(programArguments.length == 4) {
+			edgesPath = programArguments[0];
+			outputPath = programArguments[1];
+			maxIterations = Integer.parseInt(programArguments[2]);
+			intermediateResultsPath = programArguments[3];
 		} else {
-			System.out.println("Executing Connected Components example with default parameters and built-in default data.");
-			System.out.println("  Provide parameters to read input data from files.");
-			System.out.println("  See the documentation for the correct format of input files.");
-			System.out.println("  Usage: ConnectedComponents <edges path> " +
+			System.err.println("Usage: ConnectedComponents <edges path> " +
 					"<result path> <max number of iterations> <intermediate results path>");
+			return false;
 		}
+
 		return true;
 	}
-
-	private static DataSet<Long> getVertexDataSet(ExecutionEnvironment env) {
-
-		if(fileOutput) {
-			return env.readCsvFile(verticesPath).types(Long.class)
-					.map(
-							new MapFunction<Tuple1<Long>, Long>() {
-								public Long map(Tuple1<Long> value) { return value.f0; }
-							});
-		} else {
-			return ConnectedComponentsData.getDefaultVertexDataSet(env);
-		}
-	}
-
-	private static DataSet<Tuple2<Long, Long>> getEdgeDataSet(ExecutionEnvironment env) {
-
-		if(fileOutput) {
-			return env.readCsvFile(edgesPath).fieldDelimiter(" ").types(Long.class, Long.class);
-		} else {
-			return ConnectedComponentsData.getDefaultEdgeDataSet(env);
-		}
-	}
-
-
 
 	// *************************************************************************
 	// USER FUNCTIONS
@@ -253,7 +202,7 @@ public class ConnectedComponents implements ProgramDescription {
 		@Override
 		public void reduce(Iterable<Tuple2<Integer, Integer>> t, Collector<Tuple2<Integer, Integer>> c) throws Exception {
 			Integer v = t.iterator().next().f0;
-			c.collect(new Tuple2<Integer, Integer>(v, v));
+			c.collect(new Tuple2<>(v, v));
 		}
 	}
 
@@ -268,8 +217,8 @@ public class ConnectedComponents implements ProgramDescription {
 			String[] line = edge.split("\t");
 			Integer v1 = Integer.parseInt(line[0]);
 			Integer v2 = Integer.parseInt(line[1]);
-			out.collect(new Tuple2<Integer, Integer>(v1, v2));
-			out.collect(new Tuple2<Integer, Integer>(v2, v1));
+			out.collect(new Tuple2<>(v1, v2));
+			out.collect(new Tuple2<>(v2, v1));
 		}
 	}
 
@@ -287,7 +236,7 @@ public class ConnectedComponents implements ProgramDescription {
 
 		@Override
 		public Tuple2<Integer, Integer> join(Tuple2<Integer, Integer> vertexWithComponent, Tuple2<Integer, Integer> edge) {
-			return new Tuple2<Integer, Integer>(edge.f1, vertexWithComponent.f1);
+			return new Tuple2<>(edge.f1, vertexWithComponent.f1);
 		}
 	}
 

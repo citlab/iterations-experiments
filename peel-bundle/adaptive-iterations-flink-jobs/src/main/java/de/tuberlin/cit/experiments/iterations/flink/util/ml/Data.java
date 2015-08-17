@@ -1,4 +1,4 @@
-package org.apache.flink.examples.java.ml.util;
+package de.tuberlin.cit.experiments.iterations.flink.util.ml;
 
 import java.io.Serializable;
 

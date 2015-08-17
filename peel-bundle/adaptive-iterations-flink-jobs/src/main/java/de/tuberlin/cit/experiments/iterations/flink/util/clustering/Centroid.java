@@ -1,4 +1,4 @@
-package org.apache.flink.examples.java.clustering.util;
+package de.tuberlin.cit.experiments.iterations.flink.util.clustering;
 
 /**
  * A simple two-dimensional centroid, basically a point with an ID.

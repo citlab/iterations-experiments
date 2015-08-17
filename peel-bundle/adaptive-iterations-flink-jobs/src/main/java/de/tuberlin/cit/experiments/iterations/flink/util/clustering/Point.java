@@ -1,4 +1,4 @@
-package org.apache.flink.examples.java.clustering.util;
+package de.tuberlin.cit.experiments.iterations.flink.util.clustering;
 
 import java.io.Serializable;
 

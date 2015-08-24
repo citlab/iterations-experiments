@@ -409,8 +409,7 @@ class JobManager(protected val flinkConfiguration: Configuration,
       }
 
     case CpuReport(report) =>
-      log.info(s"Received CPU report")
-      // TODO log reported info: average, min, max, median
+      log.info(s"CPU report: ${report.getMean} ${report.getMin} ${report.getMax} ${report.getMedian}")
 
     case message: AccumulatorMessage => handleAccumulatorMessage(message)
 

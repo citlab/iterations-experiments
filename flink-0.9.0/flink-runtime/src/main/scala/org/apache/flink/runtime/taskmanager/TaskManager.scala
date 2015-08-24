@@ -401,9 +401,9 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
         }
 
       case IterationDone() =>
-        val cpuReport: TaskMessage = CpuReport(metricRegistryMapper.writeValueAsBytes(metricRegistry))
+        val cpuReport: CpuReport = CpuReport(metricRegistryMapper.writeValueAsBytes(metricRegistry))
         currentJobManager foreach {
-          jm => jm ! cpuReport
+          _ ! cpuReport
         }
     }
   }

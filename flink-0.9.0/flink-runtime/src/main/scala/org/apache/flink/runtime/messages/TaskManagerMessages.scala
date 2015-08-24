@@ -55,6 +55,9 @@ object TaskManagerMessages {
    */
   case class Heartbeat(instanceID: InstanceID, metricsReport: Array[Byte])
 
+  case class CpuReport(report: Array[Byte])
+    extends TaskManagerMessage
+
 
   // --------------------------------------------------------------------------
   //  Reporting the current TaskManager stack trace

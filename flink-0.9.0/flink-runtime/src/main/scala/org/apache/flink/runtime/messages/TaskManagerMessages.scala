@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.messages
 
+import com.codahale.metrics.Snapshot
 import org.apache.flink.runtime.instance.InstanceID
 
 /**
@@ -55,8 +56,7 @@ object TaskManagerMessages {
    */
   case class Heartbeat(instanceID: InstanceID, metricsReport: Array[Byte])
 
-  case class CpuReport(report: Array[Byte])
-    extends TaskManagerMessage
+  case class CpuReport(report: Snapshot)
 
 
   // --------------------------------------------------------------------------

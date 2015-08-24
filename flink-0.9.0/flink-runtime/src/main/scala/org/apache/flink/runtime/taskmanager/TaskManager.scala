@@ -28,7 +28,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 
-import com.codahale.metrics.{Gauge, MetricFilter, MetricRegistry}
+import com.codahale.metrics._
 import com.codahale.metrics.json.MetricsModule
 import com.codahale.metrics.jvm.{MemoryUsageGaugeSet, GarbageCollectorMetricSet}
 
@@ -145,6 +145,8 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
                                           TimeUnit.MILLISECONDS,
                                           false,
                                           MetricFilter.ALL))
+
+  private val cpuHistogram: Histogram = new Histogram(new ExponentiallyDecayingReservoir)
 
   /** Actors which want to be notified once this task manager has been
       registered at the job manager */
@@ -401,9 +403,10 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
         }
 
       case IterationDone() =>
-        val cpuReport: CpuReport = CpuReport(metricRegistryMapper.writeValueAsBytes(metricRegistry))
+        val cpuLoad: Double = metricRegistry.getGauges.get("cpuLoad").getValue.asInstanceOf[Double]
+        cpuHistogram.update(math.floor(cpuLoad * 100).toInt)
         currentJobManager foreach {
-          _ ! cpuReport
+          _ ! CpuReport(cpuHistogram.getSnapshot)
         }
     }
   }

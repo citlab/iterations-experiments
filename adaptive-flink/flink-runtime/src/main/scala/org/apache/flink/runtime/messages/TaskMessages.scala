@@ -80,9 +80,6 @@ object TaskMessages {
   case class IterationDone()
     extends TaskMessage
 
-  case class CpuReport(report: Array[Byte])
-    extends TaskMessage
-
 
   // --------------------------------------------------------------------------
   //  Updates to Intermediate Results

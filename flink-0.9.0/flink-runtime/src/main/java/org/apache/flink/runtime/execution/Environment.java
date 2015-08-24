@@ -141,6 +141,8 @@ public interface Environment {
 
 	BroadcastVariableManager getBroadcastVariableManager();
 
+	void iterationDone();
+
 	/**
 	 * Reports the given set of accumulators to the JobManager.
 	 *

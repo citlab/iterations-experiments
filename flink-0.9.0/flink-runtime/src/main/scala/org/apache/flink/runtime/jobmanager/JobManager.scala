@@ -52,7 +52,7 @@ import org.apache.flink.runtime.jobmanager.accumulators.AccumulatorManager
 import org.apache.flink.runtime.jobmanager.scheduler.{Scheduler => FlinkScheduler}
 import org.apache.flink.runtime.messages.JobManagerMessages._
 import org.apache.flink.runtime.messages.RegistrationMessages._
-import org.apache.flink.runtime.messages.TaskManagerMessages.{SendStackTrace, Heartbeat}
+import org.apache.flink.runtime.messages.TaskManagerMessages.{CpuReport, SendStackTrace, Heartbeat}
 import org.apache.flink.util.{ExceptionUtils, InstantiationUtil}
 
 import akka.actor._
@@ -407,6 +407,9 @@ class JobManager(protected val flinkConfiguration: Configuration,
       } catch {
         case t: Throwable => log.error(s"Could not report heart beat from ${sender().path}.", t)
       }
+
+    case CpuReport(report) =>
+      log.info(s"CPU report: ${report.getMean} ${report.getMin} ${report.getMax} ${report.getMedian}")
 
     case message: AccumulatorMessage => handleAccumulatorMessage(message)
 

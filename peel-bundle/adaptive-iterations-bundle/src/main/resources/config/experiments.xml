@@ -13,7 +13,9 @@
 
     <!-- custom system beans -->
     <import resource="systems.xml"/>
-    <!-- wordcount experiment beans -->
+
+    <!-- experiment beans -->
     <import resource="experiments.wordcount.xml"/>
+    <import resource="experiments.iterations.xml"/>
 
 </beans>

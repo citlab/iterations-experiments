@@ -71,7 +71,7 @@ public class KMeansDataGenerator {
 
 		// check parameter count
 		if (args.length < 2) {
-			System.out.println("KMeansDataGenerator -points <num> -k <num clusters> [-output <output-path>] [-stddev <relative stddev>] [-range <centroid range>] [-seed <seed>] [-skew <factorsPerCenter>]");
+			System.out.println("KMeansDataGenerator -points <num> -k <num clusters> [-output <output-path>] [-stddev <relative stddev>] [-range <centroid range>] [-seed <seed>]");
 			System.exit(1);
 		}
 
@@ -85,37 +85,29 @@ public class KMeansDataGenerator {
 		final double range = params.getDouble("range", DEFAULT_VALUE_RANGE);
 		final long firstSeed = params.getLong("seed", DEFAULT_SEED);
 
-		final String skewString = params.get("skew");
-
-		int[] skew = parseSkewFactors(skewString, k);
-
+		
 		final double absoluteStdDev = stddev * range;
 		final Random random = new Random(firstSeed);
-
+		
 		// the means around which data points are distributed
 		final double[][] means = uniformRandomCenters(random, k, DIMENSIONALITY, range);
-
+		
 		// write the points out
 		BufferedWriter pointsOut = null;
 		try {
 			pointsOut = new BufferedWriter(new FileWriter(new File(outDir+"/"+POINTS_FILE)));
 			StringBuilder buffer = new StringBuilder();
-
+			
 			double[] point = new double[DIMENSIONALITY];
 			int nextCentroid = 0;
-
-			int i = 1;
-			while (i <= numDataPoints) {
+			
+			for (int i = 1; i <= numDataPoints; i++) {
 				// generate a point for the current centroid
 				double[] centroid = means[nextCentroid];
-
-				for (int j = 0; j < skew[nextCentroid]; j++) {
-					for (int d = 0; d < DIMENSIONALITY; d++) {
-						point[d] = (random.nextGaussian() * absoluteStdDev) + centroid[d];
-					}
-					writePoint(point, buffer, pointsOut);
-					i++;
+				for (int d = 0; d < DIMENSIONALITY; d++) {
+					point[d] = (random.nextGaussian() * absoluteStdDev) + centroid[d];
 				}
+				writePoint(point, buffer, pointsOut);
 				nextCentroid = (nextCentroid + 1) % k;
 			}
 		}
@@ -124,15 +116,15 @@ public class KMeansDataGenerator {
 				pointsOut.close();
 			}
 		}
-
+		
 		// write the uniformly distributed centers to a file
 		BufferedWriter centersOut = null;
 		try {
 			centersOut = new BufferedWriter(new FileWriter(new File(outDir+"/"+CENTERS_FILE)));
 			StringBuilder buffer = new StringBuilder();
-
+			
 			double[][] centers = uniformRandomCenters(random, k, DIMENSIONALITY, range);
-
+			
 			for (int i = 0; i < k; i++) {
 				writeCenter(i + 1, centers[i], buffer, centersOut);
 			}
@@ -146,22 +138,7 @@ public class KMeansDataGenerator {
 		System.out.println("Wrote "+numDataPoints+" data points to "+outDir+"/"+POINTS_FILE);
 		System.out.println("Wrote "+k+" cluster centers to "+outDir+"/"+CENTERS_FILE);
 	}
-
-	private static int[] parseSkewFactors(String skewString, int k) {
-		int[] skew = new int[k];
-		if (skewString != null && skewString.split(",").length == k) {
-			String[] skewFactors = skewString.split(",");
-			for (int i=0; i<k; i++) {
-				skew[i] = Integer.valueOf(skewFactors[i]);
-			}
-		} else {
-			for (int i=0; i<k; i++) {
-				skew[i] = 1;
-			}
-		}
-		return skew;
-	}
-
+	
 	private static double[][] uniformRandomCenters(Random rnd, int num, int dimensionality, double range) {
 		final double halfRange = range / 2;
 		final double[][] points = new double[num][dimensionality];

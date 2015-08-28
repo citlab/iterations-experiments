@@ -13,9 +13,9 @@
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.datagen.flink.kmeans.KMeansDataGeneratorJob        \
               ${app.path.datagens}/adaptive-iterations-datagens-1.0-SNAPSHOT.jar        \
-              -points ${datagen.kmeans.points}                                           \
+              --points ${datagen.kmeans.points}                                           \
               -k ${datagen.kmeans.centers}                           \
-              -output ${system.hadoop-2.path.input}
+              --output ${system.hadoop-2.path.input}
             ]]>
             </value>
         </constructor-arg>

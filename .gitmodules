@@ -1,0 +1,3 @@
+[submodule "peel-bundle/adaptive-iterations-bundle/src/main/resources/config/peelconfig.wally"]
+	path = peel-bundle/adaptive-iterations-bundle/src/main/resources/config/peelconfig.wally
+	url = git@github.com:stratosphere/peelconfig.wally.git

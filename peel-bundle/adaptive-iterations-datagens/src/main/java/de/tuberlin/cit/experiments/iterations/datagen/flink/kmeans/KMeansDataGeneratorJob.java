@@ -26,6 +26,7 @@ import org.apache.flink.core.fs.FileSystem;
 
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Random;
@@ -45,7 +46,7 @@ public class KMeansDataGeneratorJob {
 	private static final double DEFAULT_VALUE_RANGE = 100.0;
 	private static final double RELATIVE_STDDEV = 0.08;
 	private static final int DIMENSIONALITY = 2;
-	private static final DecimalFormat FORMAT = new DecimalFormat("#0.00");
+	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#0.00");
 	private static final char DELIMITER = ' ';
 
 	/**
@@ -95,12 +96,11 @@ public class KMeansDataGeneratorJob {
 		random.setSeed(firstSeed);
 
 		// the means around which data points are distributed
-		final double[][] means = uniformRandomCenters(random, k, DIMENSIONALITY, range);
-
+		final KMeansCentroid[] means = uniformRandomCenters(random, k, DIMENSIONALITY, range);
 
 		MeanGeneratorConfiguration[] confs = new MeanGeneratorConfiguration[means.length];
 		for (int i = 0; i < means.length; i++) {
-			confs[i] = new MeanGeneratorConfiguration(means[i], absoluteStdDev);
+			confs[i] = new MeanGeneratorConfiguration(means[i].getCoordinates(), absoluteStdDev);
 		}
 
 		int skewSum = 0;
@@ -115,12 +115,13 @@ public class KMeansDataGeneratorJob {
 
 
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		TextOutputFormat.TextFormatter<double[]> formatter = new TextOutputFormat.TextFormatter<double[]>() {
+
+		final TextOutputFormat.TextFormatter<double[]> pointsFormatter = new TextOutputFormat.TextFormatter<double[]>() {
 			@Override
 			public String format(double[] coordinates) {
 				StringBuilder builder = new StringBuilder();
 				for (int j = 0; j < coordinates.length; j++) {
-					builder.append(FORMAT.format(coordinates[j]));
+					builder.append(DECIMAL_FORMAT.format(coordinates[j]));
 					if (j < coordinates.length - 1) {
 						builder.append(DELIMITER);
 					}
@@ -129,19 +130,31 @@ public class KMeansDataGeneratorJob {
 			}
 		};
 
+		final TextOutputFormat.TextFormatter<KMeansCentroid> centersFormatter = new TextOutputFormat.TextFormatter<KMeansCentroid>() {
+			@Override
+			public String format(KMeansCentroid centroid) {
+				StringBuilder builder = new StringBuilder();
+
+				builder.append(NumberFormat.getIntegerInstance().format(centroid.getId()));
+				builder.append(DELIMITER);
+				builder.append(pointsFormatter.format(centroid.getCoordinates()));
+
+				return builder.toString();
+			}
+		};
 
 		// write the points out
 		KMeansDataGenerator kMeansDataGenerator = new KMeansDataGenerator(confs, meanProbs, numDataPoints);
 		kMeansDataGenerator.setRandom(random);
 		env
 				.fromCollection(kMeansDataGenerator, double[].class)
-				.writeAsFormattedText(Paths.get(outDir, POINTS_FILE).toString(), FileSystem.WriteMode.OVERWRITE, formatter);
+				.writeAsFormattedText(outDir + "/" + POINTS_FILE, FileSystem.WriteMode.OVERWRITE, pointsFormatter);
 
 
-		double[][] centers = uniformRandomCenters(random, k, DIMENSIONALITY, range);
+		KMeansCentroid[] centers = uniformRandomCenters(random, k, DIMENSIONALITY, range);
 		env
 				.fromCollection(Arrays.asList(centers))
-				.writeAsFormattedText(Paths.get(outDir, CENTERS_FILE).toString(), FileSystem.WriteMode.OVERWRITE, formatter);
+				.writeAsFormattedText(outDir + "/" + CENTERS_FILE, FileSystem.WriteMode.OVERWRITE, centersFormatter);
 
 
 		env.execute("KMeans Data Generator");
@@ -165,16 +178,19 @@ public class KMeansDataGeneratorJob {
 		return skew;
 	}
 
-	private static double[][] uniformRandomCenters(Random rnd, int num, int dimensionality, double range) {
+	private static KMeansCentroid[] uniformRandomCenters(Random rnd, int num, int dimensionality, double range) {
 		final double halfRange = range / 2;
-		final double[][] points = new double[num][dimensionality];
+
+		KMeansCentroid[] centers = new KMeansCentroid[num];
 
 		for (int i = 0; i < num; i++) {
+			double[] coordinates = new double[dimensionality];
 			for (int dim = 0; dim < dimensionality; dim++) {
-				points[i][dim] = (rnd.nextDouble() * range) - halfRange;
+				coordinates[dim] = (rnd.nextDouble() * range) - halfRange;
 			}
+			centers[i] = new KMeansCentroid(i, coordinates);
 		}
-		return points;
+		return centers;
 	}
 
 }

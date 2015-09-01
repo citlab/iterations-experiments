@@ -1,3 +1,0 @@
-[submodule "droog"]
-	path = experiments/adaptive-iterations-bundle/src/main/resources/config/droog
-	url = git@github.com:lauritzthamsen/peelconfig.droog.git

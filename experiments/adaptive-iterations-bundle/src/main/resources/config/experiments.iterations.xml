@@ -99,6 +99,114 @@
         </constructor-arg>
     </bean>
 
+    <!-- beginning of suite to iterate over multiple variables -->
+    <bean id="kmeans.multipleVariables" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                <!-- 500 MB of points -->
+                <!-- 5 centers -->
+                <bean parent="experiment.flink.kmeans">
+                    <constructor-arg name="name" value="kmeans.flink.points_500MB.centers_5.worker_5"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 40000000
+                                  datagen.kmeans.centers = 5
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+                <!-- 10 centers -->
+                <bean parent="experiment.flink.kmeans">
+                    <constructor-arg name="name" value="kmeans.flink.points_500MB.centers_10.worker_5"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 40000000
+                                  datagen.kmeans.centers = 10
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+                <!-- 1 GB of points -->
+                <!-- 5 centers -->
+                <bean parent="experiment.flink.kmeans">
+                    <constructor-arg name="name" value="kmeans.flink.points_1GB.centers_5.worker_5"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 80000000
+                                  datagen.kmeans.centers = 5
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+                <!-- 10 centers -->
+                <bean parent="experiment.flink.kmeans">
+                    <constructor-arg name="name" value="kmeans.flink.points_1GB.centers_10.worker_5"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 80000000
+                                  datagen.kmeans.centers = 10
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+                <!-- 5 GB of points -->
+                <!-- 5 centers -->
+                <bean parent="experiment.flink.kmeans">
+                    <constructor-arg name="name" value="kmeans.flink.points_5GB.centers_5.worker_5"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 400000000
+                                  datagen.kmeans.centers = 5
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+                <!-- 10 centers -->
+                <bean parent="experiment.flink.kmeans">
+                    <constructor-arg name="name" value="kmeans.flink.points_5GB.centers_10.worker_5"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 400000000
+                                  datagen.kmeans.centers = 10
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+
     <!-- suite for scale-out on 5, 10, and 20 nodes -->
     <!--<bean id="kmeans.scale-out" class="org.peelframework.core.beans.experiment.ExperimentSuite">-->
         <!--<constructor-arg name="experiments">-->

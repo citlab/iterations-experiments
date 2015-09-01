@@ -1,6 +1,3 @@
 [submodule "droog"]
 	path = experiments/adaptive-iterations-bundle/src/main/resources/config/droog
 	url = git@github.com:lauritzthamsen/peelconfig.droog.git
-[submodule "experiments/adaptive-iterations-bundle/src/main/resources/config/peelconfig.wally"]
-	path = experiments/adaptive-iterations-bundle/src/main/resources/config/peelconfig.wally
-	url = git@github.com:stratosphere/peelconfig.wally.git

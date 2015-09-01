@@ -53,11 +53,30 @@
         <constructor-arg name="fs" ref="hdfs-2.7.1"/>
     </bean>
 
-    <!-- K-means experiment with fixed dataset (flink) -->
-    <bean id="experiment.flink.kmeans" parent="experiment.flink-0.9.0" abstract="true">
+    <!-- K-means experiment with native Iterations -->
+    <bean id="experiment.flink.kmeans.nativeiterations" parent="experiment.flink-0.9.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.KMeans                    \
+              ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar          \
+              ${system.hadoop-2.path.input}/points                            \
+              ${system.hadoop-2.path.input}/centers                            \
+              ${system.hadoop-2.path.output}/kmeans \
+              10
+            ]]></value>
+        </constructor-arg>
+        <constructor-arg name="outputs">
+            <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+                <ref bean="kmeans.output"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <!-- K-means experiment with multijob Iterations -->
+    <bean id="experiment.flink.kmeans.multijobiterations" parent="experiment.flink-0.9.0" abstract="true">
+        <constructor-arg name="command">
+            <value><![CDATA[
+              -v -c de.tuberlin.cit.experiments.iterations.flink.multijobiterations.KMeans                    \
               ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar          \
               ${system.hadoop-2.path.input}/points                            \
               ${system.hadoop-2.path.input}/centers                            \
@@ -80,7 +99,7 @@
     <bean id="kmeans.default" class="org.peelframework.core.beans.experiment.ExperimentSuite">
         <constructor-arg name="experiments">
             <list value-type="org.peelframework.core.beans.experiment.Experiment">
-                <bean parent="experiment.flink.kmeans">
+                <bean parent="experiment.flink.kmeans.nativeiterations">
                     <constructor-arg name="name" value="kmeans.flink"/>
                     <constructor-arg name="inputs">
                         <set>
@@ -105,8 +124,25 @@
             <list value-type="org.peelframework.core.beans.experiment.Experiment">
                 <!-- 500 MB of points -->
                 <!-- 5 centers -->
-                <bean parent="experiment.flink.kmeans">
-                    <constructor-arg name="name" value="kmeans.flink.points_500MB.centers_5.worker_5"/>
+                <!-- native iteration -->
+                <bean parent="experiment.flink.kmeans.nativeiterations">
+                    <constructor-arg name="name" value="kmeans.flink.points.nativeiterations_500MB.centers_5.worker_5"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 40000000
+                                  datagen.kmeans.centers = 5
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+                <!-- multijob iteration -->
+                <bean parent="experiment.flink.kmeans.multijobiterations">
+                    <constructor-arg name="name" value="kmeans.flink.points.multijobiterations_500MB.centers_5.worker_5"/>
                     <constructor-arg name="inputs">
                         <set>
                             <ref bean="dataset.kmeans.generated.points" />
@@ -121,8 +157,8 @@
                     </constructor-arg>
                 </bean>
                 <!-- 10 centers -->
-                <bean parent="experiment.flink.kmeans">
-                    <constructor-arg name="name" value="kmeans.flink.points_500MB.centers_10.worker_5"/>
+                <bean parent="experiment.flink.kmeans.nativeiterations">
+                    <constructor-arg name="name" value="kmeans.flink.points.nativeiterations_500MB.centers_10.worker_5"/>
                     <constructor-arg name="inputs">
                         <set>
                             <ref bean="dataset.kmeans.generated.points" />
@@ -138,8 +174,8 @@
                 </bean>
                 <!-- 1 GB of points -->
                 <!-- 5 centers -->
-                <bean parent="experiment.flink.kmeans">
-                    <constructor-arg name="name" value="kmeans.flink.points_1GB.centers_5.worker_5"/>
+                <bean parent="experiment.flink.kmeans.nativeiterations">
+                    <constructor-arg name="name" value="kmeans.flink.points.nativeiterations_1GB.centers_5.worker_5"/>
                     <constructor-arg name="inputs">
                         <set>
                             <ref bean="dataset.kmeans.generated.points" />
@@ -154,8 +190,8 @@
                     </constructor-arg>
                 </bean>
                 <!-- 10 centers -->
-                <bean parent="experiment.flink.kmeans">
-                    <constructor-arg name="name" value="kmeans.flink.points_1GB.centers_10.worker_5"/>
+                <bean parent="experiment.flink.kmeans.nativeiterations">
+                    <constructor-arg name="name" value="kmeans.flink.points.nativeiterations_1GB.centers_10.worker_5"/>
                     <constructor-arg name="inputs">
                         <set>
                             <ref bean="dataset.kmeans.generated.points" />
@@ -171,8 +207,8 @@
                 </bean>
                 <!-- 5 GB of points -->
                 <!-- 5 centers -->
-                <bean parent="experiment.flink.kmeans">
-                    <constructor-arg name="name" value="kmeans.flink.points_5GB.centers_5.worker_5"/>
+                <bean parent="experiment.flink.kmeans.nativeiterations">
+                    <constructor-arg name="name" value="kmeans.flink.points.nativeiterations_5GB.centers_5.worker_5"/>
                     <constructor-arg name="inputs">
                         <set>
                             <ref bean="dataset.kmeans.generated.points" />
@@ -187,8 +223,8 @@
                     </constructor-arg>
                 </bean>
                 <!-- 10 centers -->
-                <bean parent="experiment.flink.kmeans">
-                    <constructor-arg name="name" value="kmeans.flink.points_5GB.centers_10.worker_5"/>
+                <bean parent="experiment.flink.kmeans.nativeiterations">
+                    <constructor-arg name="name" value="kmeans.flink.points.nativeiterations_5GB.centers_10.worker_5"/>
                     <constructor-arg name="inputs">
                         <set>
                             <ref bean="dataset.kmeans.generated.points" />
@@ -221,7 +257,7 @@
                 <!--</constructor-arg>-->
                 <!--<constructor-arg name="prototypes">-->
                     <!--<list value-type="org.peelframework.core.beans.experiment.Experiment">-->
-                        <!--<bean parent="experiment.flink.kmeans">-->
+                        <!--<bean parent="experiment.flink.kmeans.nativeiterations">-->
                             <!--<constructor-arg name="name" value="kmeans.flink.__topXXX__"/>-->
                             <!--<constructor-arg name="inputs">-->
                                 <!--<set>-->

@@ -11,6 +11,10 @@
     <!-- Scan for annotated Peel components in the 'de.tuberlin.cit.experiments.iterations' package -->
     <context:component-scan base-package="de.tuberlin.cit.experiments.iterations"/>
 
+    <!-- Peel configurations -->
+    <import resource="classpath:peel-core.xml"/>
+    <import resource="classpath:peel-extensions.xml"/>
+
     <!-- custom system beans -->
     <import resource="systems.xml"/>
 

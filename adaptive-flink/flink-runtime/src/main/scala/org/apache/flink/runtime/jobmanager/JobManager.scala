@@ -408,8 +408,8 @@ class JobManager(protected val flinkConfiguration: Configuration,
         case t: Throwable => log.error(s"Could not report heart beat from ${sender().path}.", t)
       }
 
-    case CpuReport(report) =>
-      log.info(s"CPU report: ${report.getMean} ${report.getMin} ${report.getMax} ${report.getMedian}")
+    case CpuReport(instanceID, report) =>
+      log.info(s"CPU report of ${instanceID}: ${report.getMean} ${report.getMin} ${report.getMax} ${report.getMedian}")
 
     case message: AccumulatorMessage => handleAccumulatorMessage(message)
 

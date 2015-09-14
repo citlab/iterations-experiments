@@ -406,7 +406,7 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
         val cpuLoad: Double = metricRegistry.getGauges.get("cpuLoad").getValue.asInstanceOf[Double]
         cpuHistogram.update(math.floor(cpuLoad * 100).toInt)
         currentJobManager foreach {
-          _ ! CpuReport(cpuHistogram.getSnapshot)
+          _ ! CpuReport(instanceID,  cpuHistogram.getSnapshot)
         }
     }
   }

@@ -56,7 +56,13 @@ object TaskManagerMessages {
    */
   case class Heartbeat(instanceID: InstanceID, metricsReport: Array[Byte])
 
-  case class CpuReport(report: Snapshot)
+  /**
+   * Reports current CPU usage of the TaskManager instance to its JobManager.
+   *
+   * @param instanceID The instance ID of the reporting TaskManager.
+   * @param snapshot A Snapshot of the current CPU usage of that instance.
+   */
+  case class CpuReport(instanceID: InstanceID, snapshot: Snapshot)
 
 
   // --------------------------------------------------------------------------

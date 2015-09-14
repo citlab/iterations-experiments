@@ -146,8 +146,6 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
                                           false,
                                           MetricFilter.ALL))
 
-  private val cpuHistogram: Histogram = new Histogram(new ExponentiallyDecayingReservoir)
-
   /** Actors which want to be notified once this task manager has been
       registered at the job manager */
   private val waitForRegistration = scala.collection.mutable.Set[ActorRef]()
@@ -404,9 +402,8 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
 
       case IterationDone() =>
         val cpuLoad: Double = metricRegistry.getGauges.get("cpuLoad").getValue.asInstanceOf[Double]
-        cpuHistogram.update(math.floor(cpuLoad * 100).toInt)
         currentJobManager foreach {
-          _ ! CpuReport(instanceID,  cpuHistogram.getSnapshot)
+          _ ! CpuReport(instanceID,  cpuLoad)
         }
     }
   }

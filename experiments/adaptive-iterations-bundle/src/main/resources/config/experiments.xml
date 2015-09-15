@@ -19,6 +19,6 @@
     <import resource="systems.xml"/>
 
     <!-- experiment beans -->
-    <import resource="experiments.iterations.xml"/>
+    <import resource="experiments.kmeans.xml"/>
 
 </beans>

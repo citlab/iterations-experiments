@@ -72,6 +72,8 @@ public class Instance {
 
 	private byte[] lastMetricsReport;
 
+	private List<Double> cpuHistory;
+
 	/** Flag marking the instance as alive or as dead. */
 	private volatile boolean isDead;
 
@@ -95,6 +97,8 @@ public class Instance {
 		this.resources = resources;
 		this.numberOfSlots = numberOfSlots;
 
+		this.cpuHistory = new ArrayList<Double>();
+
 		this.availableSlots = new ArrayDeque<Integer>(numberOfSlots);
 		for (int i = 0; i < numberOfSlots; i++) {
 			this.availableSlots.add(i);
@@ -115,6 +119,10 @@ public class Instance {
 
 	public int getTotalNumberOfSlots() {
 		return numberOfSlots;
+	}
+
+	public List<Double> getCPUHistory() {
+		return cpuHistory;
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -178,6 +186,10 @@ public class Instance {
 
 	public void setMetricsReport(byte[] lastMetricsReport) {
 		this.lastMetricsReport = lastMetricsReport;
+	}
+
+	public void addCpuUtilization(double cpuUtilization) {
+		this.cpuHistory.add(cpuUtilization);
 	}
 
 	public byte[] getLastMetricsReport() {
@@ -388,4 +400,5 @@ public class Instance {
 		return String.format("%s @ %s - %d slots - URL: %s", instanceId, connectionInfo.getHostname(),
 				numberOfSlots, (taskManager != null ? taskManager.path() : "ActorRef.noSender"));
 	}
+
 }

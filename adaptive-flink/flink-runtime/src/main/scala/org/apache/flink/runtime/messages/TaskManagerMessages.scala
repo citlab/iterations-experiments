@@ -53,7 +53,7 @@ object TaskManagerMessages {
    * @param instanceID The instance ID of the reporting TaskManager.
    * @param metricsReport utf-8 encoded JSON metrics report from the metricRegistry.
    */
-  case class Heartbeat(instanceID: InstanceID, metricsReport: Array[Byte])
+  case class Heartbeat(instanceID: InstanceID, metricsReport: Array[Byte], cpuUtilization: Double)
 
 
   // --------------------------------------------------------------------------

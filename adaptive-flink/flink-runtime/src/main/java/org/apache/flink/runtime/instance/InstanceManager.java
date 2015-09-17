@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.instance;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import akka.actor.ActorRef;
+import org.apache.flink.runtime.util.SerializedValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +95,7 @@ public class InstanceManager {
 		}
 	}
 
-	public boolean reportHeartBeat(InstanceID instanceId, byte[] lastMetricsReport) {
+	public boolean reportHeartBeat(InstanceID instanceId, byte[] lastMetricsReport, double cpuUtilization) {
 		if (instanceId == null) {
 			throw new IllegalArgumentException("InstanceID may not be null.");
 		}
@@ -116,6 +118,7 @@ public class InstanceManager {
 
 			host.reportHeartBeat();
 			host.setMetricsReport(lastMetricsReport);
+			host.addCpuUtilization(cpuUtilization);
 
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Received heartbeat from TaskManager " + host);
@@ -123,6 +126,10 @@ public class InstanceManager {
 
 			return true;
 		}
+	}
+
+	public boolean reportHeartBeat(InstanceID instanceID, byte[] lastMetricsReport) {
+		return this.reportHeartBeat(instanceID, lastMetricsReport, -1.0);
 	}
 
 	public InstanceID registerTaskManager(ActorRef taskManager, InstanceConnectionInfo connectionInfo, HardwareDescription resources, int numberOfSlots){
@@ -208,6 +215,24 @@ public class InstanceManager {
 			// return a copy (rather than a Collections.unmodifiable(...) wrapper), such that
 			// concurrent modifications do not interfere with the traversals or lookups
 			return new HashSet<Instance>(registeredHostsById.values());
+		}
+	}
+
+	public Map<String,SerializedValue<Object>> getCpuHistories() {
+		synchronized (this.lock) {
+
+			Map<String,SerializedValue<Object>> cpuHistories =
+					new HashMap<String, SerializedValue<Object>>();
+
+			for (Instance instance : registeredHostsById.values()) {
+				try {
+					cpuHistories.put(instance.getId().toString(), new SerializedValue<Object>(instance.getCPUHistory()));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			return cpuHistories;
 		}
 	}
 

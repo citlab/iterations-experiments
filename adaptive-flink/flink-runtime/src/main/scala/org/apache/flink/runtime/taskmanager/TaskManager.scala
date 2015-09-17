@@ -931,8 +931,10 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
     try {
       log.debug("Sending heartbeat to JobManager")
       val report: Array[Byte] = metricRegistryMapper.writeValueAsBytes(metricRegistry)
+      val cpuUtilization: Double = metricRegistry.getGauges.get("cpuLoad").
+        getValue.asInstanceOf[Double]
       currentJobManager foreach {
-        jm => jm ! Heartbeat(instanceID, report)
+        jm => jm ! Heartbeat(instanceID, report, cpuUtilization)
       }
     }
     catch {

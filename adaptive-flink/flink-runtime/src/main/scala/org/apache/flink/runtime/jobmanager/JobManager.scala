@@ -46,7 +46,7 @@ import org.apache.flink.runtime.util.{SerializedValue, EnvironmentInformation}
 import org.apache.flink.runtime.{StreamingMode, ActorSynchronousLogging, ActorLogMessages}
 import org.apache.flink.runtime.akka.AkkaUtils
 import org.apache.flink.runtime.execution.librarycache.BlobLibraryCacheManager
-import org.apache.flink.runtime.instance.InstanceManager
+import org.apache.flink.runtime.instance.{Instance, InstanceManager}
 import org.apache.flink.runtime.jobgraph.{JobVertexID, JobGraph, JobStatus}
 import org.apache.flink.runtime.jobmanager.accumulators.AccumulatorManager
 import org.apache.flink.runtime.jobmanager.scheduler.{Scheduler => FlinkScheduler}
@@ -103,7 +103,6 @@ class JobManager(protected val flinkConfiguration: Configuration,
 
   /** List of current jobs running jobs */
   protected val currentJobs = scala.collection.mutable.HashMap[JobID, (ExecutionGraph, JobInfo)]()
-
 
   /**
    * Run when the job manager is started. Simply logs an informational message.
@@ -295,6 +294,7 @@ class JobManager(protected val flinkConfiguration: Configuration,
             // is the client waiting for the job result?
             newJobStatus match {
               case JobStatus.FINISHED =>
+
                 val accumulatorResults: java.util.Map[String, SerializedValue[AnyRef]] = try {
                   accumulatorManager.getJobAccumulatorResultsSerialized(jobID)
                 } catch {
@@ -302,8 +302,13 @@ class JobManager(protected val flinkConfiguration: Configuration,
                     log.error(s"Cannot fetch serialized accumulators for job $jobID", e)
                     Collections.emptyMap()
                 }
+
+                for ((k,v) <- instanceManager.getCpuHistories.asScala) {
+                  accumulatorResults.put("cpu utilization for " + k,v)
+                }
+
                 val result = new SerializedJobExecutionResult(jobID, jobInfo.duration,
-                                                              accumulatorResults)
+                  accumulatorResults)
                 jobInfo.client ! JobResultSuccess(result)
 
               case JobStatus.CANCELED =>
@@ -400,10 +405,10 @@ class JobManager(protected val flinkConfiguration: Configuration,
       import scala.collection.JavaConverters._
       sender ! RegisteredTaskManagers(instanceManager.getAllRegisteredInstances.asScala)
 
-    case Heartbeat(instanceID, metricsReport) =>
+    case Heartbeat(instanceID, metricsReport, cpuUtilization) =>
       try {
         log.debug(s"Received hearbeat message from $instanceID.")
-        instanceManager.reportHeartBeat(instanceID, metricsReport)
+        instanceManager.reportHeartBeat(instanceID, metricsReport, cpuUtilization)
       } catch {
         case t: Throwable => log.error(s"Could not report heart beat from ${sender().path}.", t)
       }

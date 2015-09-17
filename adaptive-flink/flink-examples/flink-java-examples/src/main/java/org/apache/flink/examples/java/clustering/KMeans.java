@@ -20,11 +20,14 @@ package org.apache.flink.examples.java.clustering;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Map;
 
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
+import org.apache.flink.api.java.io.DiscardingOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
@@ -121,7 +124,10 @@ public class KMeans {
 			env.execute("KMeans Example");
 		}
 		else {
-			clusteredPoints.print();
+			clusteredPoints.output(new DiscardingOutputFormat<Tuple2<Integer, Point>>()).name("idc sink");
+			JobExecutionResult result = env.execute("KMeans Example");
+			Map<String,Object> accumulatorResults = result.getAllAccumulatorResults();
+			System.out.println(accumulatorResults);
 		}
 	}
 	

@@ -94,7 +94,7 @@ public class AccumulatorManager {
 		}
 
 		if (acc == null || acc.getAccumulators().isEmpty()) {
-			return Collections.emptyMap();
+			return new HashMap<String, SerializedValue<Object>>();
 		}
 
 		Map<String, SerializedValue<Object>> result = new HashMap<String, SerializedValue<Object>>();

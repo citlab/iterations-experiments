@@ -23,6 +23,7 @@ import java.net.InetSocketAddress
 import java.util.Collections
 
 import akka.actor.Status.{Success, Failure}
+import com.codahale.metrics.{ExponentiallyDecayingReservoir, Histogram}
 import grizzled.slf4j.Logger
 import org.apache.flink.api.common.{JobID, ExecutionConfig}
 import org.apache.flink.configuration.{ConfigConstants, GlobalConfiguration, Configuration}
@@ -52,7 +53,7 @@ import org.apache.flink.runtime.jobmanager.accumulators.AccumulatorManager
 import org.apache.flink.runtime.jobmanager.scheduler.{Scheduler => FlinkScheduler}
 import org.apache.flink.runtime.messages.JobManagerMessages._
 import org.apache.flink.runtime.messages.RegistrationMessages._
-import org.apache.flink.runtime.messages.TaskManagerMessages.{SendStackTrace, Heartbeat}
+import org.apache.flink.runtime.messages.TaskManagerMessages.{CpuReport, SendStackTrace, Heartbeat}
 import org.apache.flink.util.{ExceptionUtils, InstantiationUtil}
 
 import akka.actor._
@@ -103,6 +104,8 @@ class JobManager(protected val flinkConfiguration: Configuration,
 
   /** List of current jobs running jobs */
   protected val currentJobs = scala.collection.mutable.HashMap[JobID, (ExecutionGraph, JobInfo)]()
+
+  private val cpuHistogram: Histogram = new Histogram(new ExponentiallyDecayingReservoir)
 
 
   /**
@@ -407,6 +410,12 @@ class JobManager(protected val flinkConfiguration: Configuration,
       } catch {
         case t: Throwable => log.error(s"Could not report heart beat from ${sender().path}.", t)
       }
+
+    case CpuReport(instanceID, cpuLoad) =>
+      cpuHistogram.update(math.floor(cpuLoad * 100).toInt)
+      log.info(s"CPU load of ${instanceID}: ${cpuLoad}")
+      val snapshot = cpuHistogram.getSnapshot
+      log.info(s"CPU report: ${snapshot.getMean} ${snapshot.getMin} ${snapshot.getMax} ${snapshot.getMedian}")
 
     case message: AccumulatorMessage => handleAccumulatorMessage(message)
 

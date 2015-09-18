@@ -493,7 +493,7 @@ public class Task implements Runnable {
 					jobConfiguration, taskConfiguration,
 					userCodeClassLoader, memoryManager, ioManager, broadcastVariableManager,
 					splitProvider, distributedCacheEntries,
-					writers, inputGates, jobManager);
+					writers, inputGates, jobManager, taskManager);
 
 			// let the task code create its readers and writers
 			invokable.setEnvironment(env);

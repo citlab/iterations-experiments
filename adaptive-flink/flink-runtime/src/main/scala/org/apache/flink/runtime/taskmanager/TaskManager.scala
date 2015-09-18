@@ -28,7 +28,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 
-import com.codahale.metrics.{Gauge, MetricFilter, MetricRegistry}
+import com.codahale.metrics._
 import com.codahale.metrics.json.MetricsModule
 import com.codahale.metrics.jvm.{MemoryUsageGaugeSet, GarbageCollectorMetricSet}
 
@@ -398,6 +398,12 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
             task.onPartitionStateUpdate(taskResultId, partitionId, state)
           case None =>
             log.debug(s"Cannot find task $taskExecutionId to respond with partition state.")
+        }
+
+      case IterationDone() =>
+        val cpuLoad: Double = metricRegistry.getGauges.get("cpuLoad").getValue.asInstanceOf[Double]
+        currentJobManager foreach {
+          _ ! CpuReport(instanceID,  cpuLoad)
         }
     }
   }

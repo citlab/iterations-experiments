@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.messages
 
+import com.codahale.metrics.Snapshot
 import org.apache.flink.runtime.instance.InstanceID
 
 /**
@@ -54,6 +55,14 @@ object TaskManagerMessages {
    * @param metricsReport utf-8 encoded JSON metrics report from the metricRegistry.
    */
   case class Heartbeat(instanceID: InstanceID, metricsReport: Array[Byte])
+
+  /**
+   * Reports the current CPU load of the TaskManager instance to its JobManager.
+   *
+   * @param instanceID The instance ID of the reporting TaskManager.
+   * @param cpuLoad The current CPU load of that instance.
+   */
+  case class CpuReport(instanceID: InstanceID, cpuLoad: Double)
 
 
   // --------------------------------------------------------------------------

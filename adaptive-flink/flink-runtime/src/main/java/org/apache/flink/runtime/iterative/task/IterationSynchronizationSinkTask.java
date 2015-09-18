@@ -134,7 +134,9 @@ public class IterationSynchronizationSinkTask extends AbstractInvokable implemen
 
 				AllWorkersDoneEvent allWorkersDoneEvent = new AllWorkersDoneEvent(aggregators);
 				sendToAllWorkers(allWorkersDoneEvent);
-				
+
+				getEnvironment().iterationDone();
+
 				// reset all aggregators
 				for (Aggregator<?> agg : aggregators.values()) {
 					agg.reset();

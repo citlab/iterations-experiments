@@ -77,6 +77,9 @@ object TaskMessages {
   case class TaskInFinalState(executionID: ExecutionAttemptID)
     extends TaskMessage
 
+  case class IterationDone()
+    extends TaskMessage
+
 
   // --------------------------------------------------------------------------
   //  Updates to Intermediate Results

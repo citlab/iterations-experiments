@@ -385,22 +385,7 @@ under the License.
 				<hadoop.version>2.6.0</hadoop.version>
 			</properties>
 		</profile>
-		<profile>
-			<id>include-yarn</id>
-			<activation>
-				<property>
-				<!-- Please do not remove the 'hadoop1' comment. See ./tools/generate_specific_pom.sh -->
-				<!--hadoop2--><name>!hadoop.profile</name>
-				</property>
-			</activation>
-			<properties>
-				<shading-artifact.name>flink-shaded-include-yarn</shading-artifact.name>
-			</properties>
-			<modules>
-				<module>flink-yarn</module>
-				<module>flink-yarn-tests</module>
-			</modules>
-		</profile>
+		
 
 		<profile>
 			<id>vendor-repos</id>

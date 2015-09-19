@@ -19,6 +19,15 @@
     <import resource="systems.xml"/>
 
     <!-- experiment beans -->
-    <import resource="experiments.kmeans.xml"/>
+    <import resource="experiments.kmeans.base.xml"/>
+    <import resource="experiments.kmeans.full.xml"/>
+    <import resource="experiments.multi-job-overhead.xml"/>
+
+    <!-- TODO: add base definitions for connected components and SGD -->
+
+    <!-- TODO: add benchmarks with connected components to the multi-job-overhead evaluation experiments -->
+
+    <!-- TODO: add experiments for the adadptive-resource allocation (iterative jobs submitted with underprovisioned,
+    overprovisioned and fitting resources) -->
 
 </beans>

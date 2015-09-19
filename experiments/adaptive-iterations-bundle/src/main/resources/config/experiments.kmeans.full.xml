@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--************************************************************************
+    * Suites
+    *************************************************************************-->
+
+    <!-- suite for local testing of kmeans with ExperimentSequence.CrossedParameters -->
+    <bean id="kmeans.full.local" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <bean class="org.peelframework.core.beans.experiment.ExperimentSequence">
+                <constructor-arg name="parameters">
+                    <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.CrossedParameters">
+                        <constructor-arg name="parameters">
+                            <list>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numberOfPoints" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>100</value>
+                                            <value>400</value>
+                                            <value>800</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numberOfCenters" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>3</value>
+                                            <value>5</value>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numIterationsRun" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>5</value>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                            </list>
+                        </constructor-arg>
+                    </bean>
+                </constructor-arg>
+                <constructor-arg name="prototypes">
+                    <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                        <bean parent="experiment.flink.kmeans.nativeiterations">
+                            <constructor-arg name="name" value="points-__numberOfPoints__.centers-__numberOfCenters__.numIterations-__numIterationsRun__"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  datagen.kmeans.points                = __numberOfPoints__
+                                  datagen.kmeans.centers               = __numberOfCenters__
+                                  numIterations                        = __numIterationsRun__
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+    <!-- suite for cluster testing of kmeans with ExperimentSequence.CrossedParameters -->
+    <bean id="kmeans.full.wally" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <bean class="org.peelframework.core.beans.experiment.ExperimentSequence">
+                <constructor-arg name="parameters">
+                    <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.CrossedParameters">
+                        <constructor-arg name="parameters">
+                            <list>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numberOfPoints" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>10000000</value>
+                                            <value>40000000</value>
+                                            <value>80000000</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numberOfCenters" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>3</value>
+                                            <value>5</value>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numIterationsRun" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>5</value>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="topXXX" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>top005</value>
+                                            <value>top010</value>
+                                            <value>top020</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                            </list>
+                        </constructor-arg>
+                    </bean>
+                </constructor-arg>
+                <constructor-arg name="prototypes">
+                    <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                        <bean parent="experiment.flink.kmeans.nativeiterations">
+                            <constructor-arg name="name" value="flink.kmeans.cluster.points-__numberOfPoints__.centers-__numberOfCenters__.numIterations-__numIterationsRun__.slaves-__topXXX__"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  system.default.config.slaves              = ${env.slaves.__topXXX__.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.__topXXX__.total.parallelism}
+                                  datagen.kmeans.points                     = __numberOfPoints__
+                                  datagen.kmeans.centers                    = __numberOfCenters__
+                                  numIterations                             = __numIterationsRun__
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+</beans>

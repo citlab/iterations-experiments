@@ -19,7 +19,9 @@
 package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import java.util.Collection;
+import java.util.Map;
 
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -35,6 +37,8 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Centroid;
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Point;
+
+import de.tuberlin.cit.experiments.iterations.prototype.AdaptiveResourceAllocator;
 
 
 /**
@@ -98,7 +102,24 @@ public class KMeans {
 		DataSet<Point> points = getPointDataSet(env);
 		DataSet<Centroid> centroids = getCentroidDataSet(env);
 
+		JobExecutionResult lastExecutionResult = null;
+
 		for(int i = 0; i < numIterations; i++) {
+
+			if (lastExecutionResult != null) {
+
+				System.out.println(" -- Computing new parallelism -- ");
+
+				Map<String, Object> accumulatorResults = lastExecutionResult.getAllAccumulatorResults();
+
+				System.out.println("Accumulator results: " + accumulatorResults);
+
+				int proposedParallelism = AdaptiveResourceAllocator.computeOptimalParallelism(env.getParallelism(), accumulatorResults);
+
+				System.out.println("original parallelism:" + env.getParallelism());
+				System.out.println("proposed parallelism:" + proposedParallelism);
+
+			}
 
 			//Read in for next Iteration with typeSerializer()
 			if(i != 0) {
@@ -119,7 +140,7 @@ public class KMeans {
 				centroids.write(new TypeSerializerOutputFormat<Centroid>(),
 						(intermediateResultsPath + "/iteration_" + Integer.toString(i)),
 						FileSystem.WriteMode.OVERWRITE);
-				env.execute("KMeans Example");
+				lastExecutionResult = env.execute("KMeans Example");
 			}
 		}
 

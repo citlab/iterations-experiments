@@ -60,6 +60,11 @@
                 <artifactId>adaptive-iterations-flink-jobs</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>adaptive-iterations-prototype</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
 
             <!-- Peel -->
             <dependency>
@@ -181,5 +186,6 @@
     <module>adaptive-iterations-peelextensions</module>
     <module>adaptive-iterations-datagens</module>
     <module>adaptive-iterations-flink-jobs</module>
+    <module>adaptive-iterations-prototype</module>
   </modules>
 </project>

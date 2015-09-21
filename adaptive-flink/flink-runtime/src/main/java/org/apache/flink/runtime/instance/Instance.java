@@ -18,12 +18,7 @@
 
 package org.apache.flink.runtime.instance;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 import akka.actor.ActorRef;
 
@@ -72,7 +67,7 @@ public class Instance {
 
 	private byte[] lastMetricsReport;
 
-	private List<Double> cpuHistory;
+	private Map<JobID, List<Double>> cpuHistoryPerJob;
 
 	/** Flag marking the instance as alive or as dead. */
 	private volatile boolean isDead;
@@ -97,7 +92,7 @@ public class Instance {
 		this.resources = resources;
 		this.numberOfSlots = numberOfSlots;
 
-		this.cpuHistory = new ArrayList<Double>();
+		this.cpuHistoryPerJob = new HashMap<JobID, List<Double>>();
 
 		this.availableSlots = new ArrayDeque<Integer>(numberOfSlots);
 		for (int i = 0; i < numberOfSlots; i++) {
@@ -121,8 +116,8 @@ public class Instance {
 		return numberOfSlots;
 	}
 
-	public List<Double> getCPUHistory() {
-		return cpuHistory;
+	public List<Double> getCPUHistory(JobID jobID) {
+		return cpuHistoryPerJob.get(jobID);
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -189,7 +184,18 @@ public class Instance {
 	}
 
 	public void addCpuUtilization(double cpuUtilization) {
-		this.cpuHistory.add(cpuUtilization);
+		Set<JobID> recordedJobs = new HashSet<JobID>();
+		for (Slot slot : this.allocatedSlots) {
+			JobID jobID = slot.getJobID();
+			if (!recordedJobs.contains(jobID)) {
+				recordedJobs.add(jobID);
+				if (!cpuHistoryPerJob.containsKey(jobID)) {
+					cpuHistoryPerJob.put(jobID, new ArrayList<Double>(1));
+				}
+				cpuHistoryPerJob.get(jobID).add(cpuUtilization);
+				LOG.info("CPU usage {} captured for job {}, worker {}", cpuUtilization, jobID, instanceId);
+			}
+		}
 	}
 
 	public byte[] getLastMetricsReport() {

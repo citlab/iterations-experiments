@@ -303,7 +303,7 @@ class JobManager(protected val flinkConfiguration: Configuration,
                     Collections.emptyMap()
                 }
 
-                for ((k,v) <- instanceManager.getCpuHistories.asScala) {
+                for ((k,v) <- instanceManager.getCpuHistories(jobID).asScala) {
                   accumulatorResults.put("cpu utilization for " + k,v)
                 }
 

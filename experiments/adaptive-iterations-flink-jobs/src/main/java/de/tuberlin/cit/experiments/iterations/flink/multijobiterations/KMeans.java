@@ -19,7 +19,9 @@
 package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import java.util.Collection;
+import java.util.Map;
 
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -131,7 +133,10 @@ public class KMeans {
 		clusteredPoints.writeAsCsv(outputPath, "\n", " ",FileSystem.WriteMode.OVERWRITE);
 
 		// since file sinks are lazy, we trigger the execution explicitly
-		env.execute("KMeans Example");
+		JobExecutionResult result = env.execute("KMeans Example");
+
+		Map<String,Object> accumulatorResults = result.getAllAccumulatorResults();
+		System.out.println(accumulatorResults);
 	}
 
 

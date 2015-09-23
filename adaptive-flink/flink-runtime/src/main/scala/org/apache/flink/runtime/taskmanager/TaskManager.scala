@@ -930,9 +930,19 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
   private def sendHeartbeatToJobManager(): Unit = {
     try {
       log.debug("Sending heartbeat to JobManager")
-      val report: Array[Byte] = metricRegistryMapper.writeValueAsBytes(metricRegistry)
+
+      // TODO: send cpuLoad only once per heartbeat, not once with the serialized registry and once separately
+
+      // FIXME: the way the CPU utilization is currently read seems to be dependent on the timing (whether heartbeat
+      // intervals are big enough and weather it's read separately before the entire registry gets serialized)
+
       val cpuUtilization: Double = metricRegistry.getGauges.get("cpuLoad").
         getValue.asInstanceOf[Double]
+
+      val report: Array[Byte] = metricRegistryMapper.writeValueAsBytes(metricRegistry)
+
+      log.info("AI - sending heartbeat to JM with CPU utilization of " + cpuUtilization)
+
       currentJobManager foreach {
         jm => jm ! Heartbeat(instanceID, report, cpuUtilization)
       }
@@ -1016,7 +1026,7 @@ object TaskManager {
 
   val DELAY_AFTER_REFUSED_REGISTRATION: FiniteDuration = 10 seconds
 
-  val HEARTBEAT_INTERVAL: FiniteDuration = 5000 milliseconds
+  val HEARTBEAT_INTERVAL: FiniteDuration = 250 milliseconds
 
 
   // --------------------------------------------------------------------------

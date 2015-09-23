@@ -608,6 +608,33 @@ class JobManager(protected val flinkConfiguration: Configuration,
       // the job.
       try {
         log.info(s"Scheduling job ${executionGraph.getJobName}.")
+
+        var jobDop = 0;
+        for ((v) <- jobGraph.getVertices.asScala) {
+          if (v.getParallelism() > jobDop){
+            jobDop = v.getParallelism()}
+        }
+
+        log.info("AI -Job dop is " + jobDop);
+
+        var numberOfTMSlots = this.flinkConfiguration.
+          getInteger(ConfigConstants.TASK_MANAGER_NUM_TASK_SLOTS, 0);
+
+        log.info("AI - Number of slots from flink conf " + numberOfTMSlots);
+
+        var numberOfTMs = {
+          Math.ceil(jobDop.toDouble / numberOfTMSlots.toDouble)
+        };
+
+//        numberOfTMs=8
+
+        log.info("AI - Number of TMs are " + numberOfTMs);
+
+
+
+        this.scheduler.chooseTMsForNextJob(numberOfTMs.toInt)
+
+
         executionGraph.scheduleForExecution(scheduler)
       }
       catch {

@@ -18,11 +18,16 @@
 
 package de.tuberlin.cit.experiments.iterations.flink.nativeiterationsstats;
 
+import de.tuberlin.cit.experiments.iterations.flink.operatorstatistics.OperatorStatisticsAccumulator;
+import de.tuberlin.cit.experiments.iterations.flink.operatorstatistics.OperatorStatisticsConfig;
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Centroid;
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Point;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.accumulators.Accumulator;
-import org.apache.flink.api.common.functions.*;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.api.common.functions.RichReduceFunction;
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
@@ -30,8 +35,6 @@ import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.contrib.operatorstatistics.OperatorStatisticsAccumulator;
-import org.apache.flink.contrib.operatorstatistics.OperatorStatisticsConfig;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -129,7 +132,7 @@ public class KMeans {
 		JobExecutionResult result = env.execute("KMeans Example");
 
 		Map<String,Object> accumulatorResults = result.getAllAccumulatorResults();
-		System.out.println(accumulatorResults);
+		System.out.println("Accumulator results: " + accumulatorResults);
 	}
 
 	// *************************************************************************
@@ -235,7 +238,7 @@ public class KMeans {
 		@Override
 		public Tuple3<Integer, Point, Long> reduce(Tuple3<Integer, Point, Long> val1, Tuple3<Integer, Point, Long> val2) {
 			localAccumulator.add(val1.f0);
-			return new Tuple3<Integer, Point, Long>(val1.f0, val1.f1.add(val2.f1), val1.f2 + val2.f2);
+			return new Tuple3<>(val1.f0, val1.f1.add(val2.f1), val1.f2 + val2.f2);
 		}
 
 		@Override

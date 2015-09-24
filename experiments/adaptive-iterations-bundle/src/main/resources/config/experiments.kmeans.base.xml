@@ -86,6 +86,25 @@
         </constructor-arg>
     </bean>
 
+    <!-- K-means experiment with native Iterations and operator statistics -->
+    <bean id="experiment.flink.kmeans.nativeiterationsstats" parent="experiment.flink-0.9.0" abstract="true">
+        <constructor-arg name="command">
+            <value><![CDATA[
+              -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterationsstats.KMeans \
+              ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar \
+              ${system.hadoop-2.path.input}/points \
+              ${system.hadoop-2.path.input}/centers \
+              ${system.hadoop-2.path.output}/kmeans \
+              ${numIterations}
+            ]]></value>
+        </constructor-arg>
+        <constructor-arg name="outputs">
+            <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+                <ref bean="kmeans.output"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
     <!--************************************************************************
     * Suites
     *************************************************************************-->
@@ -129,6 +148,56 @@
                     <constructor-arg name="config">
                         <value><![CDATA[
                                   datagen.kmeans.points = 40000000
+                                  datagen.kmeans.centers = 10
+                                  numIterations = 10
+                                  system.default.config.slaves              = ${env.slaves.top020.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.top020.total.parallelism}
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+
+    <bean id="kmeans.test.local.stats" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                <bean parent="experiment.flink.kmeans.nativeiterationsstats">
+                    <constructor-arg name="name" value="kmeans.flink"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 200
+                                  datagen.kmeans.centers = 3
+                                  numIterations = 10
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+
+    <bean id="kmeans.test.wally.stats" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                <bean parent="experiment.flink.kmeans.nativeiterationsstats">
+                    <constructor-arg name="name" value="kmeans.flink"/>
+                    <constructor-arg name="inputs">
+                        <set>
+                            <ref bean="dataset.kmeans.generated.points" />
+                            <ref bean="dataset.kmeans.generated.centers" />
+                        </set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  datagen.kmeans.points = 400000
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
                                   system.default.config.slaves              = ${env.slaves.top020.hosts}

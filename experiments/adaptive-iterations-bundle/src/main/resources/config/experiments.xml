@@ -26,6 +26,7 @@
     <import resource="experiments.kmeans.base.xml"/>
     <import resource="experiments.kmeans.full.xml"/>
     <import resource="experiments.multi-job-overhead.xml"/>
+    <import resource="experiments.stats.overhead.xml"/>
 
     <import resource="experiments.connected-components.xml"/>
     <import resource="experiments.page-rank.xml"/>

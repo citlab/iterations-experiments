@@ -19,7 +19,6 @@
 package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import java.util.Collection;
-import java.util.Map;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -38,7 +37,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Centroid;
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Point;
 
-import de.tuberlin.cit.experiments.iterations.prototype.AdaptiveResourceAllocator;
+import de.tuberlin.cit.experiments.iterations.prototype.AdaptiveResourceRecommender;
 
 
 /**
@@ -95,37 +94,42 @@ public class KMeans {
 			return;
 		}
 
+		AdaptiveResourceRecommender resourceRecommender = new AdaptiveResourceRecommender();
+
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-		// get input data
-		DataSet<Point> points = getPointDataSet(env);
-		DataSet<Centroid> centroids = getCentroidDataSet(env);
-
 		JobExecutionResult lastExecutionResult = null;
+
+		DataSet<Centroid> centroids = env.readCsvFile(centersPath)
+				.fieldDelimiter(" ")
+				.includeFields(true, true, true)
+				.types(Integer.class, Double.class, Double.class)
+				.map(new TupleCentroidConverter());
 
 		for(int i = 0; i < numIterations; i++) {
 
-			if (lastExecutionResult != null) {
+			if (useResourcesAdaptively && lastExecutionResult != null) {
 
-				System.out.println(" -- Computing new parallelism -- ");
+				int proposedParallelism = resourceRecommender.computeNewParallelism(lastExecutionResult);
 
-				Map<String, Object> accumulatorResults = lastExecutionResult.getAllAccumulatorResults();
-
-				System.out.println("Accumulator results: " + accumulatorResults);
-
-				int proposedParallelism = AdaptiveResourceAllocator.computeOptimalParallelism(env.getParallelism(), accumulatorResults);
-
-				System.out.println("original parallelism:" + env.getParallelism());
-				System.out.println("proposed parallelism:" + proposedParallelism);
-
+				env.setParallelism(proposedParallelism);
 			}
 
-			//Read in for next Iteration with typeSerializer()
-			if(i != 0) {
-				centroids = env.readFile(new TypeSerializerInputFormat<>((centroids.getType())),
-						(intermediateResultsPath + "/iteration_" + Integer.toString(i - 1)));
-			}
+			// FIXME: read-in updated centroids (there's a bug here.. ArrayOutOfBoundException on creating the input
+			// splits for HDFS
+			// if (i != 0) {
+			//	centroids = env.readFile(new TypeSerializerInputFormat<>((centroids.getType())),
+			//			(intermediateResultsPath + "/iteration_" + Integer.toString(i - 1)));
+			// }
+
+			// get input data
+			DataSet<Point> points = env.readCsvFile(pointsPath)
+					.fieldDelimiter(" ")
+					.includeFields(true, true)
+					.types(Double.class, Double.class)
+					.map(new TuplePointConverter());
+
 			centroids = points
 					// compute closest centroid for each point
 					.map(new SelectNearestCenter()).withBroadcastSet(centroids, "centroids")
@@ -135,24 +139,32 @@ public class KMeans {
 							// compute new centroids from point counts and coordinate sums
 					.map(new CentroidAverager());
 
-			//Write out with for next iteration
-			if(i != numIterations - 1) {
-				centroids.write(new TypeSerializerOutputFormat<Centroid>(),
-						(intermediateResultsPath + "/iteration_" + Integer.toString(i)),
-						FileSystem.WriteMode.OVERWRITE);
-				lastExecutionResult = env.execute("KMeans Example");
-			}
+			// Write out centroids for next iteration
+			centroids.write(new TypeSerializerOutputFormat<Centroid>(),
+					(intermediateResultsPath + "/iteration_" + Integer.toString(i)),
+					FileSystem.WriteMode.OVERWRITE);
+			lastExecutionResult = env.execute("KMeans Example");
+			resourceRecommender.addIterationResultToHistory(lastExecutionResult);
 		}
+
+		DataSet<Point> points = env.readCsvFile(pointsPath)
+				.fieldDelimiter(" ")
+				.includeFields(true, true)
+				.types(Double.class, Double.class)
+				.map(new TuplePointConverter());
+
+		centroids = env.readFile(new TypeSerializerInputFormat<>((centroids.getType())),
+				(intermediateResultsPath + "/iteration_" + Integer.toString(numIterations - 1)));
 
 		DataSet<Tuple2<Integer, Point>> clusteredPoints = points
 				// assign points to final clusters
 				.map(new SelectNearestCenter()).withBroadcastSet(centroids, "centroids");
 
-		// emit result
-		clusteredPoints.writeAsCsv(outputPath, "\n", " ",FileSystem.WriteMode.OVERWRITE);
+		clusteredPoints.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
-		// since file sinks are lazy, we trigger the execution explicitly
 		env.execute("KMeans Example");
+
+		resourceRecommender.printExecutionSummary();
 	}
 
 
@@ -253,40 +265,28 @@ public class KMeans {
 	private static String outputPath = null;
 	private static int numIterations = 10;
 	private static String intermediateResultsPath = null;
+	private static boolean useResourcesAdaptively = false;
 
 	private static boolean parseParameters(String[] programArguments) {
 
 		// parse input arguments
-		if(programArguments.length == 5) {
+		if (programArguments.length == 6) {
 			pointsPath = programArguments[0];
 			centersPath = programArguments[1];
 			outputPath = programArguments[2];
 			numIterations = Integer.parseInt(programArguments[3]);
 			intermediateResultsPath = programArguments[4];
+			useResourcesAdaptively = programArguments[5].equals("true");
+
+			System.out.println("AI - useResourcesAdaptively: " + useResourcesAdaptively);
+
 		} else {
 			System.err.println("Usage: KMeans <points path> <centers path> " +
-					"<result path> <num iterations> <path intermediate results>");
+					"<result path> <num iterations> <path intermediate results> <useResourcesAdaptivelyBoolean>");
 			return false;
 		}
 
 		return true;
 	}
 
-	private static DataSet<Point> getPointDataSet(ExecutionEnvironment env) {
-		// read points from CSV file
-		return env.readCsvFile(pointsPath)
-				.fieldDelimiter(" ")
-				.includeFields(true, true)
-				.types(Double.class, Double.class)
-				.map(new TuplePointConverter());
-
-	}
-
-	private static DataSet<Centroid> getCentroidDataSet(ExecutionEnvironment env) {
-		return env.readCsvFile(centersPath)
-				.fieldDelimiter(" ")
-				.includeFields(true, true, true)
-				.types(Integer.class, Double.class, Double.class)
-				.map(new TupleCentroidConverter());
-	}
 }

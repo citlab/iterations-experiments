@@ -931,10 +931,12 @@ extends Actor with ActorLogMessages with ActorSynchronousLogging {
     try {
       log.debug("Sending heartbeat to JobManager")
 
-      // TODO: send cpuLoad only once per heartbeat, not once with the serialized registry and once separately
+      // TODO: send cpuLoad only once per heartbeat, not once with the serialized registry and
+      // once separately
 
-      // FIXME: the way the CPU utilization is currently read seems to be dependent on the timing (whether heartbeat
-      // intervals are big enough and weather it's read separately before the entire registry gets serialized)
+      // FIXME: the way the CPU utilization is currently read seems to be dependent on the timing
+      // (whether heartbeat intervals are big enough and weather it's read separately before the
+      // entire registry gets serialized)
 
       val cpuUtilization: Double = metricRegistry.getGauges.get("cpuLoad").
         getValue.asInstanceOf[Double]

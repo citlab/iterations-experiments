@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import akka.actor.ActorRef;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.runtime.util.SerializedValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,7 +219,7 @@ public class InstanceManager {
 		}
 	}
 
-	public Map<String,SerializedValue<Object>> getCpuHistories() {
+	public Map<String,SerializedValue<Object>> getCpuHistories(JobID jobID) {
 		synchronized (this.lock) {
 
 			Map<String,SerializedValue<Object>> cpuHistories =
@@ -226,7 +227,11 @@ public class InstanceManager {
 
 			for (Instance instance : registeredHostsById.values()) {
 				try {
-					cpuHistories.put(instance.getId().toString(), new SerializedValue<Object>(instance.getCPUHistory()));
+					List<Double> instanceCPUHistory = instance.getCPUHistory(jobID);
+					if (instanceCPUHistory != null && !instanceCPUHistory.isEmpty()) {
+						cpuHistories.put(instance.getId().toString(),
+								new SerializedValue<Object>(instanceCPUHistory));
+					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

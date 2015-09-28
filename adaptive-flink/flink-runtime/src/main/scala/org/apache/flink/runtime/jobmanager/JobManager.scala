@@ -24,6 +24,7 @@ import java.util.Collections
 
 import akka.actor.Status.{Success, Failure}
 import grizzled.slf4j.Logger
+import org.apache.flink.api.common.accumulators.{Accumulator, IntCounter, SimpleAccumulator}
 import org.apache.flink.api.common.{JobID, ExecutionConfig}
 import org.apache.flink.configuration.{ConfigConstants, GlobalConfiguration, Configuration}
 import org.apache.flink.core.io.InputSplitAssigner
@@ -57,6 +58,7 @@ import org.apache.flink.util.{ExceptionUtils, InstantiationUtil}
 
 import akka.actor._
 
+import scala.collection.immutable.HashMap
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -609,31 +611,34 @@ class JobManager(protected val flinkConfiguration: Configuration,
       try {
         log.info(s"Scheduling job ${executionGraph.getJobName}.")
 
-        var jobDop = 0;
+        var jobDop = 0
         for ((v) <- jobGraph.getVertices.asScala) {
-          if (v.getParallelism() > jobDop){
-            jobDop = v.getParallelism()}
+          if (v.getParallelism > jobDop) {
+            jobDop = v.getParallelism
+          }
         }
 
-        log.info("AI -Job dop is " + jobDop);
+        val jobDopAccumulator = new IntCounter()
+        jobDopAccumulator.add(jobDop)
+        val totalNumberOfSlotsAccumulator = new IntCounter()
+        totalNumberOfSlotsAccumulator.add(instanceManager.getTotalNumberOfSlots)
 
-        var numberOfTMSlots = this.flinkConfiguration.
-          getInteger(ConfigConstants.TASK_MANAGER_NUM_TASK_SLOTS, 0);
+        val accumulators = new java.util.HashMap[String,Accumulator[_,_]]
+        accumulators.put("jobDop", jobDopAccumulator)
+        accumulators.put("totalNumberOfSlots", totalNumberOfSlotsAccumulator)
 
-        log.info("AI - Number of slots from flink conf " + numberOfTMSlots);
+        accumulatorManager.processIncomingAccumulators(jobId, accumulators)
 
-        var numberOfTMs = {
+        val numberOfTMSlots = this.flinkConfiguration.
+          getInteger(ConfigConstants.TASK_MANAGER_NUM_TASK_SLOTS, 0)
+
+        val numberOfTMs = {
           Math.ceil(jobDop.toDouble / numberOfTMSlots.toDouble)
-        };
+        }
 
-//        numberOfTMs=8
-
-        log.info("AI - Number of TMs are " + numberOfTMs);
-
-
+        log.info("AI - Number of TMs that will be used for the next job: " + numberOfTMs)
 
         this.scheduler.chooseTMsForNextJob(numberOfTMs.toInt)
-
 
         executionGraph.scheduleForExecution(scheduler)
       }

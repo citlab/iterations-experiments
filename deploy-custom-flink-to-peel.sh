@@ -15,18 +15,20 @@ mvn clean install -DskipTests
 mv build-target flink-0.9.0
 
 if [ -z "$LOCAL_PEEL_SYSTEMS" ]; then
-    echo "variable LOCAL_PEEL_SYSTEMS has not been set"
-    echo "should be /PATH/TO/LOCAL/PEEL/BUNDLE/SYSTEMS"
+    echo "!! variable LOCAL_PEEL_SYSTEMS has not been set"
+    echo "(should be /PATH/TO/LOCAL/PEEL/BUNDLE/SYSTEMS)"
     echo "e.g. /home/[user]/bin/peel/adaptive-iterations/system"
 else
+    echo ">> Copying flink build to $LOCAL_PEEL_SYSTEMS/flink-0.9.0"
     rm -rf $LOCAL_PEEL_SYSTEMS/flink-0.9.0
     cp -R flink-0.9.0 $LOCAL_PEEL_SYSTEMS/flink-0.9.0
 fi
 
 if [ -z "$WALLY_PEEL_SYSTEMS" ]; then
-    echo "variable WALLY_PEEL_SYSTEMS has not been set"
-    echo "should be e.g. [user@]wally-master.cit.tu-berlin.de:/home/[user]/experiments/adaptive-iterations/systems"
+    echo "!! variable WALLY_PEEL_SYSTEMS has not been set"
+    echo "(should be e.g. [user@]wally-master.cit.tu-berlin.de:/home/[user]/experiments/adaptive-iterations/systems)"
 else
+    echo ">> Copying flink build to $WALLY_PEEL_SYSTEMS/flink-0.9.0"
     scp -r flink-0.9.0 $WALLY_PEEL_SYSTEMS
 fi
 

@@ -19,8 +19,13 @@
 
 package de.tuberlin.cit.experiments.iterations.datagen.flink.kmeans;
 
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.io.CollectionInputFormat;
+import org.apache.flink.api.java.io.IteratorInputFormat;
+import org.apache.flink.api.java.io.TextInputFormat;
 import org.apache.flink.api.java.io.TextOutputFormat;
+import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem;
 
@@ -147,9 +152,11 @@ public class KMeansDataGeneratorJob {
 		KMeansDataGenerator kMeansDataGenerator = new KMeansDataGenerator(confs, meanProbs, numDataPoints);
 		kMeansDataGenerator.setRandom(random);
 		env
-				.fromCollection(kMeansDataGenerator, double[].class)
+				.fromParallelCollection(kMeansDataGenerator, double[].class)
 				.writeAsFormattedText(outDir + "/" + POINTS_FILE, FileSystem.WriteMode.OVERWRITE, pointsFormatter);
 
+		env.execute("KMeans Data Generator: Points data");
+		System.out.println("Wrote " + numDataPoints + " data points to " + Paths.get(outDir, POINTS_FILE));
 
 		KMeansCentroid[] centers = uniformRandomCenters(random, k, DIMENSIONALITY, range);
 		env
@@ -157,9 +164,7 @@ public class KMeansDataGeneratorJob {
 				.writeAsFormattedText(outDir + "/" + CENTERS_FILE, FileSystem.WriteMode.OVERWRITE, centersFormatter);
 
 
-		env.execute("KMeans Data Generator");
-
-		System.out.println("Wrote " + numDataPoints + " data points to " + Paths.get(outDir, POINTS_FILE));
+		env.execute("KMeans Data Generator: Centroids data");
 		System.out.println("Wrote " + k + " cluster centers to " + Paths.get(outDir, CENTERS_FILE));
 	}
 

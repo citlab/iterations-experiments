@@ -96,7 +96,7 @@
                                     <constructor-arg name="vals">
                                         <list>
                                             <value>400000000</value>
-                                            <value>80000000</value>
+                                            <value>1200000000</value>
                                         </list>
                                     </constructor-arg>
                                 </bean>
@@ -121,8 +121,8 @@
                                     <constructor-arg name="name" value="topXXX" />
                                     <constructor-arg name="vals">
                                         <list>
-                                            <value>top020</value>
                                             <value>top010</value>
+                                            <value>top019</value>
                                         </list>
                                     </constructor-arg>
                                 </bean>

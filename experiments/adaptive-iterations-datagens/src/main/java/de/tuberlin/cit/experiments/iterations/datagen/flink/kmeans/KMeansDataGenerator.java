@@ -1,10 +1,12 @@
 package de.tuberlin.cit.experiments.iterations.datagen.flink.kmeans;
 
+import org.apache.flink.util.SplittableIterator;
+
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Random;
 
-public class KMeansDataGenerator implements Iterator<double[]>, Serializable {
+public class KMeansDataGenerator extends SplittableIterator<double[]> implements Serializable {
 
 	private MeanGeneratorConfiguration[] configurations;
 	private double[] meanProbabilities;
@@ -13,7 +15,6 @@ public class KMeansDataGenerator implements Iterator<double[]>, Serializable {
 	private int numDataPoints;
 
 	private Random rnd;
-
 
 	public KMeansDataGenerator(MeanGeneratorConfiguration[] configurations, double[] meanProbabilities,
 			int numDataPoints) {
@@ -64,7 +65,29 @@ public class KMeansDataGenerator implements Iterator<double[]>, Serializable {
 	}
 
 	@Override
+	public void remove() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public boolean hasNext() {
 		return generatedCounter < numDataPoints;
+	}
+
+
+	@Override
+	public Iterator<double[]>[] split(int numPartitions) {
+		KMeansDataGenerator[] iters = new KMeansDataGenerator[numPartitions];
+
+		for (int i=0; i<numPartitions; i++) {
+			iters[i] = new KMeansDataGenerator(configurations, meanProbabilities, numDataPoints/numPartitions);
+		}
+
+		return iters;
+	}
+
+	@Override
+	public int getMaximumNumberOfSplits() {
+		return 0;
 	}
 }

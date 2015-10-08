@@ -88,6 +88,6 @@ public class KMeansDataGenerator extends SplittableIterator<double[]> implements
 
 	@Override
 	public int getMaximumNumberOfSplits() {
-		return 0;
+		return numDataPoints;
 	}
 }

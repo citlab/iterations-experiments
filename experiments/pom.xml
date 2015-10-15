@@ -30,6 +30,13 @@
         <peel.version>1.0-SNAPSHOT</peel.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <!-- bundle jars -->

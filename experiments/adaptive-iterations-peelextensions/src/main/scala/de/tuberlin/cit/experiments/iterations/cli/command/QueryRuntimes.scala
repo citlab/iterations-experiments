@@ -97,7 +97,7 @@ class QueryRuntimes extends Command {
       logger.info(s"------------------------------------------------------------------------------------------------")
       logger.info(s"| RUNTIME RESULTS FOR '$suite' ${" " * (69 - suite.length)} |")
       logger.info(s"------------------------------------------------------------------------------------------------")
-      logger.info(s"| name                      | name                      |        min |        max |     median |")
+      logger.info(s"| suite                     | name                      |        min |        max |     median |")
       logger.info(s"------------------------------------------------------------------------------------------------")
       for ((suite, name, min, max, median) <- runtimes) {
         logger.info(f"| $suite%-25s | $name%-25s | $min%10d | $max%10d | $median%10d | ")

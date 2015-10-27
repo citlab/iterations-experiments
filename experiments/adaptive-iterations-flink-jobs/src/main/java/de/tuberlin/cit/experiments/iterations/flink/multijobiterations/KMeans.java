@@ -143,7 +143,11 @@ public class KMeans {
 			centroids.write(new TypeSerializerOutputFormat<Centroid>(),
 					(intermediateResultsPath + "/iteration_" + Integer.toString(i)),
 					FileSystem.WriteMode.OVERWRITE);
+
 			lastExecutionResult = env.execute("KMeans Example");
+
+			System.out.println("AI: Iteration " + i + " took " + lastExecutionResult.getNetRuntime());
+
 			resourceRecommender.addIterationResultToHistory(lastExecutionResult);
 		}
 

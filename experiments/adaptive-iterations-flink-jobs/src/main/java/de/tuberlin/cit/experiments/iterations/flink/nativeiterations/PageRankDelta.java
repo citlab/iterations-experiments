@@ -341,7 +341,7 @@ public class PageRankDelta implements ProgramDescription {
 			outputPath = programArguments[1];
 			numPages = Long.parseLong(programArguments[2]);
 			maxIterations = Integer.parseInt(programArguments[3]);
-			threshold = 0.0001 / numPages;
+			threshold = 0.0001;
 		} else {
 			System.err.println("Usage: PageRank <links path> " +
 					"<result path> <num pages> <max number of iterations>");

@@ -57,4 +57,9 @@ public class LinearRegressionDataGenerator implements Iterator<double[]>, Serial
 		point[1] = 2 * point[0] + 0.01 * random.nextGaussian();
 		return point;
 	}
+
+	@Override
+	public void remove() {
+		throw new UnsupportedOperationException();
+	}
 }

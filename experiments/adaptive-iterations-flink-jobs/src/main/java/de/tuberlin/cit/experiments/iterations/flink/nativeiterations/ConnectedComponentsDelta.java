@@ -22,25 +22,13 @@ package de.tuberlin.cit.experiments.iterations.flink.nativeiterations;
 import de.tuberlin.cit.experiments.iterations.flink.shared.AbstractConnectedComponents;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.ProgramDescription;
-import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.common.operators.base.JoinOperatorBase;
-import org.apache.flink.api.java.aggregation.Aggregations;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsFirst;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsSecond;
-import org.apache.flink.api.java.operators.IterativeDataSet;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.util.Collector;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import org.apache.flink.api.java.aggregation.Aggregations;
+import org.apache.flink.api.java.operators.DeltaIteration;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.core.fs.FileSystem;
 
 /**
  * An implementation of the connected components algorithm, using a delta iteration.
@@ -69,7 +57,8 @@ import java.util.Map;
  * 
  * <p>
  * Usage: <code>ConnectedComponents &lt;vertices path&gt; &lt;edges path&gt; &lt;result path&gt; &lt;max number of iterations&gt;</code><br>
- *
+ * If no parameters are provided, the program is run with default data from {@link ConnectedComponentsData} and 10 iterations. 
+ * 
  * <p>
  * This example shows how to use:
  * <ul>
@@ -78,7 +67,7 @@ import java.util.Map;
  * </ul>
  */
 @SuppressWarnings("serial")
-public class ConnectedComponents extends AbstractConnectedComponents implements ProgramDescription {
+public class ConnectedComponentsDelta extends AbstractConnectedComponents implements ProgramDescription {
 	
 	// *************************************************************************
 	//     PROGRAM
@@ -97,37 +86,42 @@ public class ConnectedComponents extends AbstractConnectedComponents implements 
 		// assign the initial components (equal to the vertex id)
 		DataSet<Tuple2<Integer, Integer>> verticesWithInitialId = edges.groupBy(0).reduceGroup(new InitialValue());
 
-		IterativeDataSet<Tuple2<Integer, Integer>> solutionSet = verticesWithInitialId.iterate(maxIterations);
+		DeltaIteration<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> iteration =
+				verticesWithInitialId.iterateDelta(verticesWithInitialId, maxIterations, 0);
+
 		// apply the step logic: join with the edges, select the minimum neighbor, update if the
 		// component of the candidate is smaller
 		DataSet<Tuple2<Integer, Integer>> delta =
-				solutionSet.join(edges, JoinOperatorBase.JoinHint.REPARTITION_HASH_FIRST)
+				iteration.getWorkset().join(edges, JoinOperatorBase.JoinHint.REPARTITION_HASH_FIRST)
 						.where(0)
 						.equalTo(0)
 						.with(new NeighborWithComponentIDJoin())
 						.groupBy(0)
 						.aggregate(Aggregations.MIN, 1)
-						.join(solutionSet)
+						.join(iteration.getSolutionSet())
 						.where(0)
 						.equalTo(0)
 						.with(new ComponentIdFilter());
 
-		DataSet<Tuple2<Integer, Integer>> newSolutionSet = solutionSet.coGroup(delta).where(0).equalTo(0).with(new UpdateSolutionSet());
-
 		// close the delta iteration (delta and new workset are identical)
-		DataSet<Tuple2<Integer, Integer>> result = solutionSet.closeWith(newSolutionSet, delta);
+		DataSet<Tuple2<Integer, Integer>> result = iteration.closeWith(delta, delta);
 
 		// emit result
 		result.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
 		// execute program
 		try {
-			JobExecutionResult jobResult = env.execute("Connected Components Bulk Iteration");
+			JobExecutionResult jobResult = env.execute("Page Rank Iteration with Deltas");
 			dumpAccumulators(jobResult);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+	
+	// *************************************************************************
+	//     USER FUNCTIONS
+	// *************************************************************************
 
 	@Override
 	public String getDescription() {
@@ -157,7 +151,6 @@ public class ConnectedComponents extends AbstractConnectedComponents implements 
 
 		return true;
 	}
-
 
 
 }

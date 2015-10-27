@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--************************************************************************
+    * Data Generators
+    *************************************************************************-->
+
+    <!--************************************************************************
+    * Data Sets
+    *************************************************************************-->
+
+    <!--************************************************************************
+    * Output
+    *************************************************************************-->
+
+    <bean id="connectedComponents.output" class="org.peelframework.core.beans.data.ExperimentOutput">
+        <constructor-arg name="path" value="${system.hadoop-2.path.output}/cc-output"/>
+        <constructor-arg name="fs" ref="hdfs-2.7.1"/>
+    </bean>
+
+    <bean id="connectedComponents.intermediate" class="org.peelframework.core.beans.data.ExperimentOutput">
+        <constructor-arg name="path" value="${system.hadoop-2.path.output}/cc-intermediate"/>
+        <constructor-arg name="fs" ref="hdfs-2.7.1"/>
+    </bean>
+
+    <!--************************************************************************
+    * Experiments
+    *************************************************************************-->
+
+    <bean id="experiment.flink.connectedComponents.iterations" parent="experiment.flink-0.9.0" abstract="true">
+        <constructor-arg name="command">
+            <value><![CDATA[
+              -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.ConnectedComponents \
+              ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar                        \
+              ${system.hadoop-2.path.input}/edges                                                     \
+              ${system.hadoop-2.path.output}/cc-output                                                \
+              ${numIterations}
+            ]]></value>
+        </constructor-arg>
+        <constructor-arg name="outputs">
+            <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+                <ref bean="connectedComponents.output"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.connectedComponents.deltaIterations" parent="experiment.flink-0.9.0" abstract="true">
+        <constructor-arg name="command">
+            <value><![CDATA[
+              -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.ConnectedComponentsDelta \
+              ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar                             \
+              ${system.hadoop-2.path.input}/edges                                                          \
+              ${system.hadoop-2.path.output}/cc-output                                                     \
+              ${numIterations}
+            ]]></value>
+        </constructor-arg>
+        <constructor-arg name="outputs">
+            <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+                <ref bean="connectedComponents.output"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.connectedComponents.multiJob" parent="experiment.flink-0.9.0" abstract="true">
+        <constructor-arg name="command">
+            <value><![CDATA[
+              -v -c de.tuberlin.cit.experiments.iterations.flink.multijobiterations.ConnectedComponents \
+              ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar                          \
+              ${system.hadoop-2.path.input}/edges                                                       \
+              ${system.hadoop-2.path.output}/cc-output                                                  \
+              ${numIterations}                                                                          \
+              ${system.hadoop-2.path.output}/cc-intermediate
+            ]]></value>
+        </constructor-arg>
+        <constructor-arg name="outputs">
+            <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+                <ref bean="connectedComponents.output"/>
+                <ref bean="connectedComponents.intermediate"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+
+    <!--************************************************************************
+    * Suites
+    *************************************************************************-->
+
+    <!-- suites for testing -->
+    <bean id="connectedComponents.test" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                <bean parent="experiment.flink.connectedComponents.iterations">
+                    <constructor-arg name="name" value="connectedComponents.flink.test.iterations"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="inputs">
+                        <set><ref bean="dataset.edges.test" /></set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[ numIterations = 10 ]]></value>
+                    </constructor-arg>
+                </bean>
+
+                <bean parent="experiment.flink.connectedComponents.deltaIterations">
+                    <constructor-arg name="name" value="connectedComponents.flink.test.deltaIterations"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="inputs">
+                        <set><ref bean="dataset.edges.test" /></set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[ numIterations = 10 ]]></value>
+                    </constructor-arg>
+                </bean>
+
+                <bean parent="experiment.flink.connectedComponents.multiJob">
+                    <constructor-arg name="name" value="connectedComponents.flink.test.multiJob"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="inputs">
+                        <set><ref bean="dataset.edges.test" /></set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[ numIterations = 10 ]]></value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!-- cluster suite with twitter-rv dataset -->
+    <bean id="connectedComponents.cluster.twitter-rv" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                <bean parent="experiment.flink.connectedComponents.iterations">
+                    <constructor-arg name="name" value="connectedComponents.flink.twitter-rv.iterations"/>
+                    <constructor-arg name="inputs">
+                        <set><ref bean="dataset.twitter-rv" /></set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  numIterations = 10
+                                  system.default.config.slaves              = ${env.slaves.top010.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.top010.total.parallelism}
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+
+                <bean parent="experiment.flink.connectedComponents.deltaIterations">
+                    <constructor-arg name="name" value="connectedComponents.flink.twitter-rv.deltaIterations"/>
+                    <constructor-arg name="inputs">
+                        <set><ref bean="dataset.twitter-rv" /></set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  numIterations = 10
+                                  system.default.config.slaves              = ${env.slaves.top010.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.top010.total.parallelism}
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+
+                <bean parent="experiment.flink.connectedComponents.multiJob">
+                    <constructor-arg name="name" value="connectedComponents.flink.twitter-rv.multiJob"/>
+                    <constructor-arg name="inputs">
+                        <set><ref bean="dataset.twitter-rv" /></set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  numIterations = 10
+                                  system.default.config.slaves              = ${env.slaves.top010.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.top010.total.parallelism}
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+</beans>

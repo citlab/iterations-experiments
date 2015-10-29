@@ -86,7 +86,7 @@
         </constructor-arg>
     </bean>
 
-    <!-- K-means experiment with native Iterations and operator statistics -->
+    <!-- K-means experiment with operator statistics -->
     <bean id="experiment.flink.kmeans.nativeiterationsstats" parent="experiment.flink-0.9.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
@@ -150,8 +150,8 @@
                                   datagen.kmeans.points = 40000000
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
-                                  system.default.config.slaves              = ${env.slaves.top020.hosts}
-                                  system.default.config.parallelism.total   = ${env.slaves.top020.total.parallelism}
+                                  system.default.config.slaves              = ${env.slaves.top019.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.top019.total.parallelism}
                                 ]]></value>
                     </constructor-arg>
                 </bean>
@@ -200,8 +200,8 @@
                                   datagen.kmeans.points = 400000
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
-                                  system.default.config.slaves              = ${env.slaves.top020.hosts}
-                                  system.default.config.parallelism.total   = ${env.slaves.top020.total.parallelism}
+                                  system.default.config.slaves              = ${env.slaves.top019.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.top019.total.parallelism}
                                 ]]></value>
                     </constructor-arg>
                 </bean>

@@ -1,6 +1,5 @@
 package de.tuberlin.cit.experiments.iterations.flink.shared;
 
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.CoGroupFunction;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -14,34 +13,9 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractConnectedComponents {
-
-	public static void dumpAccumulators(JobExecutionResult jobResult) {
-		Map<String, Object> accumulators = jobResult.getAllAccumulatorResults();
-		List<String> keys = new ArrayList<String>(accumulators.keySet());
-		Collections.sort(keys);
-		System.out.println("Accumulators:");
-		for (String key : keys) {
-			System.out.println(key + " : " + accumulators.get(key));
-		}
-	}
-
-	public static void dumpAccumulators(JobExecutionResult result, int iteration) {
-		Map<String, Object> accumulators = result.getAllAccumulatorResults();
-		List<String> keys = new ArrayList<String>(accumulators.keySet());
-		Collections.sort(keys);
-		System.out.println("Accumulators:");
-		for (String key : keys) {
-			System.out.println(String.format(key, iteration) + " : " + accumulators.get(key));
-		}
-	}
-
 
 	/**
 	 * Function that turns a value into a 2-tuple where both fields are that value.

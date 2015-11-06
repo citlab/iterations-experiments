@@ -20,27 +20,16 @@
 package de.tuberlin.cit.experiments.iterations.flink.nativeiterations;
 
 import de.tuberlin.cit.experiments.iterations.flink.shared.AbstractConnectedComponents;
+import de.tuberlin.cit.experiments.iterations.flink.util.AccumulatorUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.ProgramDescription;
-import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.common.operators.base.JoinOperatorBase;
-import org.apache.flink.api.java.aggregation.Aggregations;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsFirst;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsSecond;
-import org.apache.flink.api.java.operators.IterativeDataSet;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.util.Collector;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import org.apache.flink.api.java.aggregation.Aggregations;
+import org.apache.flink.api.java.operators.IterativeDataSet;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.core.fs.FileSystem;
 
 /**
  * An implementation of the connected components algorithm, using a delta iteration.
@@ -123,7 +112,7 @@ public class ConnectedComponents extends AbstractConnectedComponents implements 
 		// execute program
 		try {
 			JobExecutionResult jobResult = env.execute("Connected Components Bulk Iteration");
-			dumpAccumulators(jobResult);
+			AccumulatorUtils.dumpAccumulators(jobResult);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -157,7 +146,4 @@ public class ConnectedComponents extends AbstractConnectedComponents implements 
 
 		return true;
 	}
-
-
-
 }

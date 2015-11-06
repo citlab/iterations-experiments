@@ -20,6 +20,7 @@
 package de.tuberlin.cit.experiments.iterations.flink.nativeiterations;
 
 import de.tuberlin.cit.experiments.iterations.flink.shared.AbstractConnectedComponents;
+import de.tuberlin.cit.experiments.iterations.flink.util.AccumulatorUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.ProgramDescription;
 import org.apache.flink.api.common.operators.base.JoinOperatorBase;
@@ -112,7 +113,7 @@ public class ConnectedComponentsDelta extends AbstractConnectedComponents implem
 		// execute program
 		try {
 			JobExecutionResult jobResult = env.execute("Page Rank Iteration with Deltas");
-			dumpAccumulators(jobResult);
+			AccumulatorUtils.dumpAccumulators(jobResult);
 
 		} catch (Exception e) {
 			e.printStackTrace();

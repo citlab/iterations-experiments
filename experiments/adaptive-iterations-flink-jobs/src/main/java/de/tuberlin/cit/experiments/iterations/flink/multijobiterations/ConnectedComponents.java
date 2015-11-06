@@ -20,27 +20,17 @@
 package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import de.tuberlin.cit.experiments.iterations.flink.shared.AbstractConnectedComponents;
+import de.tuberlin.cit.experiments.iterations.flink.util.AccumulatorUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.ProgramDescription;
-import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.common.operators.base.JoinOperatorBase;
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.aggregation.Aggregations;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsFirst;
-import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFieldsSecond;
 import org.apache.flink.api.java.io.TypeSerializerInputFormat;
 import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.util.Collector;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.ExecutionEnvironment;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An implementation of the connected components algorithm, using a job per iteration.
@@ -112,7 +102,7 @@ public class ConnectedComponents extends AbstractConnectedComponents implements 
 				newSolutionSet.write(new TypeSerializerOutputFormat<Tuple2<Integer, Integer>>(),
 						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
 				JobExecutionResult jobResult = env.execute("Connected Components multi job");
-				dumpAccumulators(jobResult, i + 1);
+				AccumulatorUtils.dumpAccumulators(jobResult, i + 1);
 			}
 		}
 
@@ -122,12 +112,11 @@ public class ConnectedComponents extends AbstractConnectedComponents implements 
 		// execute program
 		try {
 			JobExecutionResult jobResult = env.execute("Connected Components multi job");
-			dumpAccumulators(jobResult, maxIterations);
+			AccumulatorUtils.dumpAccumulators(jobResult, maxIterations);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-
 
 	// *************************************************************************
 	//     USER FUNCTIONS

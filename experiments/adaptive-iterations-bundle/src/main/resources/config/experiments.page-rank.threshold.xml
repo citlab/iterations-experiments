@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--************************************************************************
+    * Data Generators
+    *************************************************************************-->
+
+    <!--************************************************************************
+    * Data Sets
+    *************************************************************************-->
+
+    <!--************************************************************************
+    * Output
+    *************************************************************************-->
+
+    <bean id="pageRank.output" class="org.peelframework.core.beans.data.ExperimentOutput">
+        <constructor-arg name="path" value="${system.hadoop-2.path.output}/page-rank-output"/>
+        <constructor-arg name="fs" ref="hdfs-2.7.1"/>
+    </bean>
+
+    <!--************************************************************************
+    * Experiments
+    *************************************************************************-->
+
+    <bean id="experiment.flink.pageRank-threshold.deltaIterations" parent="experiment.flink-0.9.0" abstract="true">
+        <constructor-arg name="command">
+            <value><![CDATA[
+              -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.PageRankDelta \
+              ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar                  \
+              ${system.hadoop-2.path.input}/edges                                               \
+              ${system.hadoop-2.path.output}/page-rank-output                                   \
+              ${numPages}                                                                       \
+              ${numIterations}                                                                  \
+              ${threshold}
+            ]]></value>
+        </constructor-arg>
+        <constructor-arg name="outputs">
+            <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+                <ref bean="pageRank.output"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <bean id="experiment.flink.pageRank-threshold.multiJob" parent="experiment.flink-0.9.0" abstract="true">
+        <constructor-arg name="command">
+            <value><![CDATA[
+              -v -c de.tuberlin.cit.experiments.iterations.flink.multijobiterations.PageRankDelta \
+              ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar                    \
+              ${system.hadoop-2.path.input}/edges                                                 \
+              ${system.hadoop-2.path.output}/page-rank-output                                     \
+              ${numPages}                                                                         \
+              ${numIterations}                                                                    \
+              ${system.hadoop-2.path.input}/intermediateResults                                   \
+              ${threshold}
+            ]]></value>
+        </constructor-arg>
+        <constructor-arg name="outputs">
+            <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+                <ref bean="pageRank.output"/>
+            </set>
+        </constructor-arg>
+    </bean>
+
+
+    <!--************************************************************************
+    * Suites
+    *************************************************************************-->
+
+    <!-- suites for testing -->
+    <bean id="pageRank-threshold.test" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                <bean parent="experiment.flink.pageRank.deltaIterations">
+                    <constructor-arg name="name" value="pageRank-threshold.flink.test.deltaIterations"/>
+                    <constructor-arg name="runs" value="1"/>
+                    <constructor-arg name="inputs">
+                        <set><ref bean="dataset.edges.test" /></set>
+                    </constructor-arg>
+                    <constructor-arg name="config">
+                        <value><![CDATA[
+                                  numPages = 9
+                                  numIterations = 10
+                                  threshold = 0.1
+                                ]]></value>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!-- cluster suite with twitter-rv dataset -->
+    <bean id="pageRank-threshold.cluster.twitter-rv" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <bean class="org.peelframework.core.beans.experiment.ExperimentSequence">
+                <constructor-arg name="parameters">
+                    <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.CrossedParameters">
+                        <constructor-arg name="parameters">
+                            <list>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="threshold" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>50</value>
+                                            <value>10</value>
+                                            <value>5</value>
+                                            <value>0.9</value>
+                                            <value>0.75</value>
+                                            <value>0.5</value>
+                                            <value>0.1</value>
+                                            <value>0.01</value>
+                                            <value>0.001</value>
+                                            <value>0.0001</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                            </list>
+                        </constructor-arg>
+                    </bean>
+                </constructor-arg>
+
+                <constructor-arg name="prototypes">
+                    <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                        <bean parent="experiment.flink.pageRank-threshold.multiJob">
+                            <constructor-arg name="name" value="pageRank-threshold-__threshold__.flink.twitter-rv.multiJob"/>
+                            <constructor-arg name="runs" value="1"/>
+                            <constructor-arg name="inputs">
+                                <set><ref bean="dataset.twitter-rv" /></set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                          numPages = 41652230
+                                          numIterations = 50
+                                          threshold = __threshold__
+                                          system.default.config.slaves              = ${env.slaves.top020.hosts}
+                                          system.default.config.parallelism.total   = ${env.slaves.top020.total.parallelism}
+                                        ]]></value>
+                            </constructor-arg>
+                        </bean>
+
+                        <bean parent="experiment.flink.pageRank-threshold.deltaIterations">
+                            <constructor-arg name="name" value="pageRank-threshold-__threshold__.flink.twitter-rv.deltaIterations"/>
+                            <constructor-arg name="runs" value="1"/>
+                            <constructor-arg name="inputs">
+                                <set><ref bean="dataset.twitter-rv" /></set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                          numPages = 41652230
+                                          numIterations = 50
+                                          threshold = __threshold__
+                                          system.default.config.slaves              = ${env.slaves.top020.hosts}
+                                          system.default.config.parallelism.total   = ${env.slaves.top020.total.parallelism}
+                                        ]]></value>
+                            </constructor-arg>
+                        </bean>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+    </bean>
+</beans>
+
+

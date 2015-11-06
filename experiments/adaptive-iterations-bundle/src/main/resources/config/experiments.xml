@@ -29,6 +29,7 @@
 
     <import resource="experiments.connected-components.xml"/>
     <import resource="experiments.page-rank.xml"/>
+    <import resource="experiments.page-rank.threshold.xml"/>
 
     <!-- TODO: add base definitions for connected components and SGD -->
 

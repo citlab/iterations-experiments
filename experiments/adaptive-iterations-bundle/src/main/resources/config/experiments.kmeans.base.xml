@@ -131,8 +131,8 @@
                                   datagen.kmeans.points = 40000000
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
-                                  system.default.config.slaves              = ${env.slaves.top020.hosts}
-                                  system.default.config.parallelism.total   = ${env.slaves.top020.total.parallelism}
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.all.total.parallelism}
                                 ]]></value>
                     </constructor-arg>
                 </bean>

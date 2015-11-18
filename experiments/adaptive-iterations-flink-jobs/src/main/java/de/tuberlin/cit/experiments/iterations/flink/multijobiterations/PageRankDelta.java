@@ -21,6 +21,7 @@ package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import de.tuberlin.cit.experiments.iterations.flink.shared.AbstractPageRank;
 import de.tuberlin.cit.experiments.iterations.flink.util.AccumulatorUtils;
+import de.tuberlin.cit.experiments.iterations.prototype.AdaptiveResourceRecommender;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -41,7 +42,7 @@ import org.apache.flink.core.fs.FileSystem;
  * characters. Edges are separated by new-line characters.<br>
  * For example <code>"1 2\n2 12\n1 12\n42 63"</code> gives four (undirected) edges (1)-(2), (2)-(12), (1)-(12), and (42)-(63).
  * </ul>
- * 
+ *
  */
 @SuppressWarnings("serial")
 public class PageRankDelta extends AbstractPageRank {
@@ -51,14 +52,16 @@ public class PageRankDelta extends AbstractPageRank {
 	// *************************************************************************
 	//     PROGRAM
 	// *************************************************************************
-	
+
 	public static void main(String... args) throws Exception {
-		
+
 		if(!parseParameters(args)) {
 			return;
 		}
 
+		AdaptiveResourceRecommender resourceRecommender = new AdaptiveResourceRecommender(targetUtilization, 32);
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+		JobExecutionResult lastExecutionResult = null;
 
 		DataSet<Tuple2<Long, Long>> links = env.readTextFile(linksPath).filter(new FilterComment()).flatMap(new UndirectEdge());
 
@@ -73,7 +76,12 @@ public class PageRankDelta extends AbstractPageRank {
 		long activePages = delta.count();
 
 		// Run Page Rank for maxIterations
-		for(int i = 0; i < maxIterations && activePages > 0; i++){
+		for(int i = 0; i < maxIterations && activePages > 0; i++) {
+
+			if (useResourcesAdaptively && lastExecutionResult != null) {
+				int proposedParallelism = resourceRecommender.computeNewParallelism(lastExecutionResult);
+				env.setParallelism(proposedParallelism);
+			}
 
 			// read intermediate results
 			if(i > 0){
@@ -96,36 +104,38 @@ public class PageRankDelta extends AbstractPageRank {
 				pagesWithRanks.write(new TypeSerializerOutputFormat<Tuple2<Long, Double>>(),
 						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
 
-				JobExecutionResult jobResult = env.execute("Connected Components multi job");
+				lastExecutionResult = env.execute("Connected Components multi job");
+				resourceRecommender.addIterationResultToHistory(lastExecutionResult);
 				System.out.println("Active pages after iteration: " + activePages);
-				AccumulatorUtils.dumpAccumulators(jobResult, i + 1);
+				AccumulatorUtils.dumpAccumulators(lastExecutionResult, i + 1);
 
-			// emit final result
+				// emit final result
 			} else {
 				pagesWithRanks.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
 				JobExecutionResult result = env.execute("Page Rank multi job with deltas");
+				resourceRecommender.printExecutionSummary();
 				AccumulatorUtils.dumpAccumulators(result, i);
 			}
 		}
 	}
-	
-	// *************************************************************************
-	//     USER FUNCTIONS
-	// *************************************************************************
-
 
 	// *************************************************************************
 	//     UTIL METHODS
 	// *************************************************************************
-	
+
+	private static final String PARAMETERS = "<links-path> <result-path> <num-pages>"
+			+ " <max-number-of-iterations> <intermediate-result-path>"
+			+ " [useResourcesAdaptively] [targetUtilization] [threshold]";
 	private static String linksPath = null;
 	private static String outputPath = null;
 	private static long numPages = 0;
 	private static int maxIterations = 10;
 	private static String intermediateResultsPath = null;
+	private static boolean useResourcesAdaptively = false;
+	private static double targetUtilization = 10;
 	private static double threshold = 0.1;
-	
+
 	private static boolean parseParameters(String[] programArguments) {
 		if(programArguments.length >= 5) {
 			linksPath = programArguments[0];
@@ -134,12 +144,19 @@ public class PageRankDelta extends AbstractPageRank {
 			maxIterations = Integer.parseInt(programArguments[3]);
 			intermediateResultsPath = programArguments[4];
 
-			if (programArguments.length == 6) {
-				threshold = Double.parseDouble(programArguments[5]);
+			if (programArguments.length >= 6) {
+				useResourcesAdaptively = programArguments[5].equals("true");
+			}
+
+			if (programArguments.length >= 7) {
+				targetUtilization = Double.parseDouble(programArguments[6]);
+			}
+
+			if (programArguments.length >= 8) {
+				threshold = Double.parseDouble(programArguments[7]);
 			}
 		} else {
-			System.err.println("Usage: PageRank <links path> " +
-					"<result path> <num pages> <max number of iterations> <intermediate-result-path> [threshold]");
+			System.err.println("Usage: PageRank " + PARAMETERS);
 			return false;
 		}
 
@@ -148,7 +165,7 @@ public class PageRankDelta extends AbstractPageRank {
 
 	@Override
 	public String getDescription() {
-		return "Parameters: <links-path> <result-path> <num-pages> <max-number-of-iterations> <intermediate-result-path> [threshold]";
+		return "Parameters: " + PARAMETERS;
 	}
 
 }

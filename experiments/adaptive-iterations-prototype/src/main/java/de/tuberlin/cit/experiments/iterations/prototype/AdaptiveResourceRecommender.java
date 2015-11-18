@@ -12,8 +12,22 @@ public class AdaptiveResourceRecommender {
 	// around 25% for each of the workers is best, so we'll scale up or down more or less aggressively to this
 	// target utilization
 	private static final Double TARGET_UTILIZATION = 0.75;
+	private static final int MIN_PARALLELISM = 1;
 
+	private final Double targetUtilization;
+	private final int minParallelism;
 	private List<JobExecutionResult> iterationsHistory = new ArrayList<>();
+
+	public AdaptiveResourceRecommender(double targetUtilization, int minParallelism) {
+		this.targetUtilization = targetUtilization;
+		this.minParallelism = minParallelism;
+		System.out.println("AI -- New recommender initialized with target utilization "
+				+ targetUtilization + " and min parallelism " + minParallelism);
+	}
+
+	public AdaptiveResourceRecommender() {
+		this(TARGET_UTILIZATION, MIN_PARALLELISM);
+	}
 
 	public int computeNewParallelism(JobExecutionResult lastResult) {
 
@@ -39,13 +53,13 @@ public class AdaptiveResourceRecommender {
 		System.out.println("AI - ca # of CPU statistics per worker: " + cpuStatistics.get(0).size());
 		System.out.println("AI - current average CPU utilization: " + currentUtilization);
 
-		int newParallelism = (int) ((currentUtilization / TARGET_UTILIZATION) * currentParallelism);
+		int newParallelism = (int) ((currentUtilization / targetUtilization) * currentParallelism);
 
 		if (newParallelism > totalNumberOfSlots) {
 			newParallelism = totalNumberOfSlots;
 		}
-		if (newParallelism < 1) {
-			newParallelism = 1;
+		if (newParallelism < minParallelism) {
+			newParallelism = minParallelism;
 		}
 
 		System.out.println("AI - new parallelism: " + newParallelism);

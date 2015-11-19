@@ -37,7 +37,6 @@ import akka.dispatch.Futures;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import org.apache.flink.runtime.akka.AkkaUtils;
 import org.apache.flink.runtime.instance.SlotSharingGroupAssignment;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.instance.SharedSlot;
@@ -50,6 +49,7 @@ import org.apache.flink.util.ExceptionUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.ExecutionContext;
 
 /**
  * The scheduler is responsible for distributing the ready-to-run tasks among instances and slots.
@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * <p>The scheduler supports two scheduling modes:</p>
  * <ul>
  *     <li>Immediate scheduling: A request for a task slot immediately returns a task slot, if one is
- *         available, or throws a {@link NoResourceAvailableException}</li>.
+ *         available, or throws a {@link NoResourceAvailableException}.</li>
  *     <li>Queued Scheduling: A request for a task slot is queued and returns a future that will be
  *         fulfilled as soon as a slot becomes available.</li>
  * </ul>
@@ -73,11 +73,6 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 	
 	/** All instances that the scheduler can deploy to */
 	private final Set<Instance> allInstances = new HashSet<Instance>();
-
-    /**
-     * All forbidden that the scheduler cannot deploy - very dangerous
-     */
-    private Set<Instance> forbiddenInstances = new HashSet<Instance>();
 	
 	/** All instances by hostname */
 	private final HashMap<String, Set<Instance>> allInstancesByHost = new HashMap<String, Set<Instance>>();
@@ -100,12 +95,17 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 	/** The number of slot allocations where locality could not be respected */
 	private int nonLocalizedAssignments;
 
+	/** The ExecutionContext which is used to execute newSlotAvailable futures. */
+	private final ExecutionContext executionContext;
+
 	// ------------------------------------------------------------------------
 
 	/**
 	 * Creates a new scheduler.
 	 */
-	public Scheduler() {}
+	public Scheduler(ExecutionContext executionContext) {
+		this.executionContext = executionContext;
+	}
 	
 	/**
 	 * Shuts the scheduler down. After shut down no more tasks can be added to the scheduler.
@@ -471,7 +471,7 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 		}
 		
 		// if nothing is available at all, return null
-		if (this.instancesWithAvailableResources.isEmpty() ||  this.instancesWithAvailableResources.size() <= forbiddenInstances.size()) {
+		if (this.instancesWithAvailableResources.isEmpty()) {
 			return null;
 		}
 
@@ -482,8 +482,7 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 
 			while (locations.hasNext()) {
 				Instance location = locations.next();
-
-				if (location != null && !forbiddenInstances.contains(location) && this.instancesWithAvailableResources.remove(location)) {
+				if (location != null && this.instancesWithAvailableResources.remove(location)) {
 					return new ImmutablePair<Instance, Locality>(location, Locality.LOCAL);
 				}
 			}
@@ -494,21 +493,12 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 			}
 			else {
 				Instance instanceToUse = this.instancesWithAvailableResources.poll();
-                while (forbiddenInstances.contains(instanceToUse)){
-                    instancesWithAvailableResources.add(instanceToUse);
-                    instanceToUse = this.instancesWithAvailableResources.poll();
-                }
-
 				return new ImmutablePair<Instance, Locality>(instanceToUse, Locality.NON_LOCAL);
 			}
 		}
 		else {
 			// no location preference, so use some instance
 			Instance instanceToUse = this.instancesWithAvailableResources.poll();
-			while (forbiddenInstances.contains(instanceToUse)){
-				instancesWithAvailableResources.add(instanceToUse);
-				instanceToUse = this.instancesWithAvailableResources.poll();
-			}
 			return new ImmutablePair<Instance, Locality>(instanceToUse, Locality.UNCONSTRAINED);
 		}
 	}
@@ -534,7 +524,7 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 				handleNewSlot();
 				return null;
 			}
-		}, AkkaUtils.globalExecutionContext());
+		}, executionContext);
 	}
 	
 	private void handleNewSlot() {
@@ -669,27 +659,6 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 			}
 		}
 	}
-
-    public void chooseTMsForNextJob(int reqTMs) {
-        forbiddenInstances = new HashSet<Instance>();
-        if (allInstances.size() - reqTMs > 0) {
-            int ueberschuss = allInstances.size() - reqTMs;
-			LOG.info("AI - ueberschuss - numbers of TMs we dont need are: " + ueberschuss);
-
-            int tmp = 0;
-            for (Instance i : allInstances) {
-                if (tmp >= ueberschuss) {
-                    break;
-                }
-                forbiddenInstances.add(i);
-                tmp++;
-            }
-			LOG.info("AI - Forbidden and dangerous instances are: " + forbiddenInstances);
-
-        }
-    }
-
-
 	
 	@Override
 	public void instanceDied(Instance instance) {

@@ -18,9 +18,12 @@
 
 package org.apache.flink.runtime.instance;
 
-import java.util.*;
-
-import akka.actor.ActorRef;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.runtime.jobmanager.scheduler.SlotAvailabilityListener;
@@ -38,8 +41,8 @@ public class Instance {
 	/** The lock on which to synchronize allocations and failure state changes */
 	private final Object instanceLock = new Object();
 
-	/** The actor ref to the task manager represented by this taskManager. */
-	private final ActorRef taskManager;
+	/** The instacne gateway to communicate with the instance */
+	private final ActorGateway actorGateway;
 
 	/** The instance connection information for the data transfer. */
 	private final InstanceConnectionInfo connectionInfo;
@@ -67,8 +70,6 @@ public class Instance {
 
 	private byte[] lastMetricsReport;
 
-	private Map<JobID, List<Double>> cpuHistoryPerJob;
-
 	/** Flag marking the instance as alive or as dead. */
 	private volatile boolean isDead;
 
@@ -78,21 +79,23 @@ public class Instance {
 	/**
 	 * Constructs an instance reflecting a registered TaskManager.
 	 *
-	 * @param taskManager The actor reference of the represented task manager.
+	 * @param actorGateway The actor gateway to communicate with the remote instance
 	 * @param connectionInfo The remote connection where the task manager receives requests.
 	 * @param id The id under which the taskManager is registered.
 	 * @param resources The resources available on the machine.
 	 * @param numberOfSlots The number of task slots offered by this taskManager.
 	 */
-	public Instance(ActorRef taskManager, InstanceConnectionInfo connectionInfo, InstanceID id,
-					HardwareDescription resources, int numberOfSlots) {
-		this.taskManager = taskManager;
+	public Instance(
+			ActorGateway actorGateway,
+			InstanceConnectionInfo connectionInfo,
+			InstanceID id,
+			HardwareDescription resources,
+			int numberOfSlots) {
+		this.actorGateway = actorGateway;
 		this.connectionInfo = connectionInfo;
 		this.instanceId = id;
 		this.resources = resources;
 		this.numberOfSlots = numberOfSlots;
-
-		this.cpuHistoryPerJob = new HashMap<JobID, List<Double>>();
 
 		this.availableSlots = new ArrayDeque<Integer>(numberOfSlots);
 		for (int i = 0; i < numberOfSlots; i++) {
@@ -114,10 +117,6 @@ public class Instance {
 
 	public int getTotalNumberOfSlots() {
 		return numberOfSlots;
-	}
-
-	public List<Double> getCPUHistory(JobID jobID) {
-		return cpuHistoryPerJob.get(jobID);
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -181,21 +180,6 @@ public class Instance {
 
 	public void setMetricsReport(byte[] lastMetricsReport) {
 		this.lastMetricsReport = lastMetricsReport;
-	}
-
-	public void addCpuUtilization(double cpuUtilization) {
-		Set<JobID> recordedJobs = new HashSet<JobID>();
-		for (Slot slot : this.allocatedSlots) {
-			JobID jobID = slot.getJobID();
-			if (!recordedJobs.contains(jobID)) {
-				recordedJobs.add(jobID);
-				if (!cpuHistoryPerJob.containsKey(jobID)) {
-					cpuHistoryPerJob.put(jobID, new ArrayList<Double>(1));
-				}
-				cpuHistoryPerJob.get(jobID).add(cpuUtilization);
-				LOG.info("CPU usage {} captured for job {}, worker {}", cpuUtilization, jobID, instanceId);
-			}
-		}
 	}
 
 	public byte[] getLastMetricsReport() {
@@ -345,12 +329,14 @@ public class Instance {
 		}
 	}
 
-	public ActorRef getTaskManager() {
-		return taskManager;
-	}
-
-	public String getPath(){
-		return taskManager.path().toString();
+	/**
+	 * Returns the InstanceGateway of this Instance. This gateway can be used to communicate with
+	 * it.
+	 *
+	 * @return InstanceGateway associated with this instance
+	 */
+	public ActorGateway getActorGateway() {
+		return actorGateway;
 	}
 
 	public InstanceConnectionInfo getInstanceConnectionInfo() {
@@ -404,7 +390,6 @@ public class Instance {
 	@Override
 	public String toString() {
 		return String.format("%s @ %s - %d slots - URL: %s", instanceId, connectionInfo.getHostname(),
-				numberOfSlots, (taskManager != null ? taskManager.path() : "ActorRef.noSender"));
+				numberOfSlots, (actorGateway != null ? actorGateway.path() : "No instance gateway"));
 	}
-
 }

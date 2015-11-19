@@ -20,14 +20,11 @@ package org.apache.flink.examples.java.clustering;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Map;
 
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
-import org.apache.flink.api.java.io.DiscardingOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
@@ -124,10 +121,7 @@ public class KMeans {
 			env.execute("KMeans Example");
 		}
 		else {
-			clusteredPoints.output(new DiscardingOutputFormat<Tuple2<Integer, Point>>()).name("idc sink");
-			JobExecutionResult result = env.execute("KMeans Example");
-			Map<String,Object> accumulatorResults = result.getAllAccumulatorResults();
-			System.out.println(accumulatorResults);
+			clusteredPoints.print();
 		}
 	}
 	
@@ -204,7 +198,7 @@ public class KMeans {
 	//     USER FUNCTIONS
 	// *************************************************************************
 	
-	/** Converts a Tuple2<Double,Double> into a Point. */
+	/** Converts a {@code Tuple2<Double,Double>} into a Point. */
 	@ForwardedFields("0->x; 1->y")
 	public static final class TuplePointConverter implements MapFunction<Tuple2<Double, Double>, Point> {
 
@@ -214,7 +208,7 @@ public class KMeans {
 		}
 	}
 	
-	/** Converts a Tuple3<Integer, Double,Double> into a Centroid. */
+	/** Converts a {@code Tuple3<Integer, Double,Double>} into a Centroid. */
 	@ForwardedFields("0->id; 1->x; 2->y")
 	public static final class TupleCentroidConverter implements MapFunction<Tuple3<Integer, Double, Double>, Centroid> {
 

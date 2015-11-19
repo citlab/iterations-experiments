@@ -18,7 +18,7 @@
 
 package org.apache.flink.api.scala.table.test
 
-import org.apache.flink.api.table.ExpressionException
+import org.apache.flink.api.table.{Row, ExpressionException}
 import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.table._
 import org.apache.flink.api.scala.util.CollectionDataSets
@@ -54,7 +54,7 @@ class AggregationsITCase(mode: TestExecutionMode) extends MultipleProgramsTestBa
 
     val env = ExecutionEnvironment.getExecutionEnvironment
     val ds = CollectionDataSets.get3TupleDataSet(env).toTable
-      .select('_1.sum, '_1.min, '_1.max, '_1.count, '_1.avg)
+      .select('_1.sum, '_1.min, '_1.max, '_1.count, '_1.avg).toDataSet[Row]
 
     ds.writeAsText(resultPath, WriteMode.OVERWRITE)
     env.execute()
@@ -66,7 +66,7 @@ class AggregationsITCase(mode: TestExecutionMode) extends MultipleProgramsTestBa
 
     val env = ExecutionEnvironment.getExecutionEnvironment
     val ds = CollectionDataSets.get3TupleDataSet(env).toTable
-      .select('foo.avg)
+      .select('foo.avg).toDataSet[Row]
 
     ds.writeAsText(resultPath, WriteMode.OVERWRITE)
     env.execute()
@@ -81,6 +81,7 @@ class AggregationsITCase(mode: TestExecutionMode) extends MultipleProgramsTestBa
       (1: Byte, 1: Short, 1, 1L, 1.0f, 1.0d, "Hello"),
       (2: Byte, 2: Short, 2, 2L, 2.0f, 2.0d, "Ciao")).toTable
       .select('_1.avg, '_2.avg, '_3.avg, '_4.avg, '_5.avg, '_6.avg, '_7.count)
+      .toDataSet[Row]
 
     ds.writeAsText(resultPath, WriteMode.OVERWRITE)
     env.execute()
@@ -92,7 +93,7 @@ class AggregationsITCase(mode: TestExecutionMode) extends MultipleProgramsTestBa
 
     val env = ExecutionEnvironment.getExecutionEnvironment
     val ds = env.fromElements((1f, "Hello"), (2f, "Ciao")).toTable
-      .select(('_1 + 2).avg + 2, '_2.count + " THE COUNT")
+      .select(('_1 + 2).avg + 2, '_2.count + " THE COUNT").toDataSet[Row]
 
     ds.writeAsText(resultPath, WriteMode.OVERWRITE)
     env.execute()
@@ -104,7 +105,7 @@ class AggregationsITCase(mode: TestExecutionMode) extends MultipleProgramsTestBa
 
     val env = ExecutionEnvironment.getExecutionEnvironment
     val ds = env.fromElements(("Hello", 1)).toTable
-      .select('_1.sum)
+      .select('_1.sum).toDataSet[Row]
 
     ds.writeAsText(resultPath, WriteMode.OVERWRITE)
     env.execute()
@@ -116,7 +117,7 @@ class AggregationsITCase(mode: TestExecutionMode) extends MultipleProgramsTestBa
 
     val env = ExecutionEnvironment.getExecutionEnvironment
     val ds = env.fromElements(("Hello", 1)).toTable
-      .select('_2.sum.sum)
+      .select('_2.sum.sum).toDataSet[Row]
 
     ds.writeAsText(resultPath, WriteMode.OVERWRITE)
     env.execute()

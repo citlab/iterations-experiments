@@ -20,12 +20,11 @@ package org.apache.flink.api.table.typeinfo
 import org.apache.flink.api.table.Row
 import org.apache.flink.api.common.typeutils.TypeSerializer
 import org.apache.flink.core.memory.{DataOutputView, DataInputView}
-;
 
 /**
  * Serializer for [[Row]].
  */
-class RowSerializer(fieldSerializers: Array[TypeSerializer[Any]])
+class RowSerializer(val fieldSerializers: Array[TypeSerializer[Any]])
   extends TypeSerializer[Row] {
 
   override def isImmutableType: Boolean = false
@@ -117,5 +116,22 @@ class RowSerializer(fieldSerializers: Array[TypeSerializer[Any]])
       fieldSerializers(i).copy(source, target)
       i += 1
     }
+  }
+
+  override def equals(any: scala.Any): Boolean = {
+    any match {
+      case otherRS: RowSerializer =>
+        otherRS.canEqual(this) &&
+          fieldSerializers.sameElements(otherRS.fieldSerializers)
+      case _ => false
+    }
+  }
+
+  override def canEqual(obj: scala.Any): Boolean = {
+    obj.isInstanceOf[RowSerializer]
+  }
+
+  override def hashCode(): Int = {
+    java.util.Arrays.hashCode(fieldSerializers.asInstanceOf[Array[AnyRef]])
   }
 }

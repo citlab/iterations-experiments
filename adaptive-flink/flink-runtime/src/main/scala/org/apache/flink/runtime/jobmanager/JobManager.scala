@@ -62,7 +62,7 @@ import org.apache.flink.runtime.taskmanager.TaskManager
 import org.apache.flink.runtime.util._
 import org.apache.flink.runtime.webmonitor.{WebMonitor, WebMonitorUtils}
 import org.apache.flink.runtime.{FlinkActor, LeaderSessionMessageFilter, LogMessages, StreamingMode}
-import org.apache.flink.util.{ExceptionUtils, InstantiationUtil, NetUtils}
+import org.apache.flink.util.{SerializedValue, ExceptionUtils, InstantiationUtil, NetUtils}
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -531,9 +531,21 @@ class JobManager(
                   try {
                     val accumulatorResults = executionGraph.getAccumulatorsSerialized()
 
-                    for ((k,v) <- instanceManager.getCpuHistories(jobID).asScala) {
-                      accumulatorResults.put("cpu utilization for " + k,v)
+                    for ((k, v) <- instanceManager.getCpuHistories(jobID).asScala) {
+                      accumulatorResults.put("cpu utilization for " + k, v)
                     }
+
+                    var jobDop = 0
+                    for ((id, vertex) <- executionGraph.getAllVertices.asScala) {
+                      if (vertex.getJobVertex.getParallelism > jobDop) {
+                        jobDop = vertex.getParallelism
+                      }
+                    }
+
+                    accumulatorResults.put("jobDop",
+                      new SerializedValue[Object](new Integer(jobDop)))
+                    accumulatorResults.put("totalNumberOfSlots",
+                      new SerializedValue[Object](new Integer(instanceManager.getTotalNumberOfSlots)))
 
                     val result = new SerializedJobExecutionResult(
                       jobID,
@@ -992,17 +1004,6 @@ class JobManager(
               }
             }
 
-            val jobDopAccumulator = new IntCounter()
-            jobDopAccumulator.add(jobDop)
-            val totalNumberOfSlotsAccumulator = new IntCounter()
-            totalNumberOfSlotsAccumulator.add(instanceManager.getTotalNumberOfSlots)
-
-            val accumulators = new java.util.HashMap[String, Accumulator[_,_]]
-            accumulators.put("jobDop", jobDopAccumulator)
-            accumulators.put("totalNumberOfSlots", totalNumberOfSlotsAccumulator)
-
-            accumulatorManager.processIncomingAccumulators(jobId, accumulators)
-
             val numberOfTMSlots = this.flinkConfiguration.
               getInteger(ConfigConstants.TASK_MANAGER_NUM_TASK_SLOTS, 0)
 
@@ -1013,7 +1014,6 @@ class JobManager(
             log.info("AI - Number of TMs that will be used for the next job: " + numberOfTMs)
 
             this.scheduler.chooseTMsForNextJob(numberOfTMs.toInt)
-
 
             executionGraph.scheduleForExecution(scheduler)
           } else {

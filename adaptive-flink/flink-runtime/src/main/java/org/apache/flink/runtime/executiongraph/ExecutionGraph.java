@@ -610,6 +610,15 @@ public class ExecutionGraph implements Serializable {
 			result.put(entry.getKey(), new SerializedValue<Object>(entry.getValue().getLocalValue()));
 		}
 
+		// add internal flink accumulators
+		for (ExecutionVertex vertex : getAllExecutionVertices()) {
+			Map<AccumulatorRegistry.Metric, Accumulator<?, ?>> taskAccs = vertex.getCurrentExecutionAttempt().getFlinkAccumulators();
+			String prefix = vertex.getSimpleName() + "-subtask_" + vertex.getSubTaskIndex() + "-id_" + vertex.getCurrentExecutionAttempt().getAttemptId();
+			for (Map.Entry<String, Accumulator<?, ?>> entry : accumulatorMap.entrySet()) {
+				result.put(prefix + entry.getKey(), new SerializedValue<Object>(entry.getValue().getLocalValue()));
+			}
+		}
+
 		return result;
 	}
 

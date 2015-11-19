@@ -18,8 +18,10 @@
 
 package org.apache.flink.runtime.instance;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import akka.actor.ActorRef;
+import org.apache.flink.api.common.JobID;
+import org.apache.flink.util.SerializedValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +98,7 @@ public class InstanceManager {
 		}
 	}
 
-	public boolean reportHeartBeat(InstanceID instanceId, byte[] lastMetricsReport) {
+	public boolean reportHeartBeat(InstanceID instanceId, byte[] lastMetricsReport, double cpuUtilization) {
 		if (instanceId == null) {
 			throw new IllegalArgumentException("InstanceID may not be null.");
 		}
@@ -117,6 +121,7 @@ public class InstanceManager {
 
 			host.reportHeartBeat();
 			host.setMetricsReport(lastMetricsReport);
+			host.addCpuUtilization(cpuUtilization);
 
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("Received heartbeat from TaskManager " + host);
@@ -271,6 +276,28 @@ public class InstanceManager {
 			// return a copy (rather than a Collections.unmodifiable(...) wrapper), such that
 			// concurrent modifications do not interfere with the traversals or lookups
 			return new HashSet<Instance>(registeredHostsById.values());
+		}
+	}
+
+	public Map<String,SerializedValue<Object>> getCpuHistories(JobID jobID) {
+		synchronized (this.lock) {
+
+			Map<String,SerializedValue<Object>> cpuHistories =
+					new HashMap<>();
+
+			for (Instance instance : registeredHostsById.values()) {
+				try {
+					List<Double> instanceCPUHistory = instance.getCPUHistory(jobID);
+					if (instanceCPUHistory != null && !instanceCPUHistory.isEmpty()) {
+						cpuHistories.put(instance.getId().toString(),
+								new SerializedValue<Object>(instanceCPUHistory));
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			return cpuHistories;
 		}
 	}
 

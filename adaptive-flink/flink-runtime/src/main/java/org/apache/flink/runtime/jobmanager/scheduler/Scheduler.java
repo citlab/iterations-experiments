@@ -73,6 +73,11 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 	
 	/** All instances that the scheduler can deploy to */
 	private final Set<Instance> allInstances = new HashSet<Instance>();
+
+    /**
+     * All forbidden that the scheduler cannot deploy - very dangerous
+     */
+    private Set<Instance> forbiddenInstances = new HashSet<Instance>();
 	
 	/** All instances by hostname */
 	private final HashMap<String, Set<Instance>> allInstancesByHost = new HashMap<String, Set<Instance>>();
@@ -471,7 +476,7 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 		}
 		
 		// if nothing is available at all, return null
-		if (this.instancesWithAvailableResources.isEmpty()) {
+		if (this.instancesWithAvailableResources.isEmpty() ||  this.instancesWithAvailableResources.size() <= forbiddenInstances.size()) {
 			return null;
 		}
 
@@ -482,7 +487,8 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 
 			while (locations.hasNext()) {
 				Instance location = locations.next();
-				if (location != null && this.instancesWithAvailableResources.remove(location)) {
+
+				if (location != null && !forbiddenInstances.contains(location) && this.instancesWithAvailableResources.remove(location)) {
 					return new ImmutablePair<Instance, Locality>(location, Locality.LOCAL);
 				}
 			}
@@ -493,12 +499,21 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 			}
 			else {
 				Instance instanceToUse = this.instancesWithAvailableResources.poll();
+                while (forbiddenInstances.contains(instanceToUse)){
+                    instancesWithAvailableResources.add(instanceToUse);
+                    instanceToUse = this.instancesWithAvailableResources.poll();
+                }
+
 				return new ImmutablePair<Instance, Locality>(instanceToUse, Locality.NON_LOCAL);
 			}
 		}
 		else {
 			// no location preference, so use some instance
 			Instance instanceToUse = this.instancesWithAvailableResources.poll();
+			while (forbiddenInstances.contains(instanceToUse)){
+				instancesWithAvailableResources.add(instanceToUse);
+				instanceToUse = this.instancesWithAvailableResources.poll();
+			}
 			return new ImmutablePair<Instance, Locality>(instanceToUse, Locality.UNCONSTRAINED);
 		}
 	}
@@ -659,6 +674,27 @@ public class Scheduler implements InstanceListener, SlotAvailabilityListener {
 			}
 		}
 	}
+
+    public void chooseTMsForNextJob(int reqTMs) {
+        forbiddenInstances = new HashSet<Instance>();
+        if (allInstances.size() - reqTMs > 0) {
+            int ueberschuss = allInstances.size() - reqTMs;
+			LOG.info("AI - ueberschuss - numbers of TMs we dont need are: " + ueberschuss);
+
+            int tmp = 0;
+            for (Instance i : allInstances) {
+                if (tmp >= ueberschuss) {
+                    break;
+                }
+                forbiddenInstances.add(i);
+                tmp++;
+            }
+			LOG.info("AI - Forbidden and dangerous instances are: " + forbiddenInstances);
+
+        }
+    }
+
+
 	
 	@Override
 	public void instanceDied(Instance instance) {

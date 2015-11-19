@@ -1038,6 +1038,17 @@ class TaskManager(
   protected def sendHeartbeatToJobManager(): Unit = {
     try {
       log.debug("Sending heartbeat to JobManager")
+
+      // TODO: send cpuLoad only once per heartbeat, not once with the serialized registry and
+      // once separately
+
+      // FIXME: the way the CPU utilization is currently read seems to be dependent on the timing
+      // (whether heartbeat intervals are big enough and weather it's read separately before the
+      // entire registry gets serialized)
+
+      val cpuUtilization: Double = metricRegistry.getGauges.get("cpuLoad").
+        getValue.asInstanceOf[Double]
+
       val metricsReport: Array[Byte] = metricRegistryMapper.writeValueAsBytes(metricRegistry)
 
       val accumulatorEvents =
@@ -1050,8 +1061,10 @@ class TaskManager(
           accumulatorEvents.append(accumulators)
       }
 
+      log.info("AI - sending heartbeat to JM with CPU utilization of " + cpuUtilization)
+
        currentJobManager foreach {
-        jm => jm ! decorateMessage(Heartbeat(instanceID, metricsReport, accumulatorEvents))
+        jm => jm ! decorateMessage(Heartbeat(instanceID, metricsReport, accumulatorEvents, cpuUtilization))
       }
     }
     catch {
@@ -1188,7 +1201,7 @@ object TaskManager {
 
   val DELAY_AFTER_REFUSED_REGISTRATION: FiniteDuration = 10 seconds
 
-  val HEARTBEAT_INTERVAL: FiniteDuration = 5000 milliseconds
+  val HEARTBEAT_INTERVAL: FiniteDuration = 250 milliseconds
 
 
   // --------------------------------------------------------------------------

@@ -614,7 +614,7 @@ public class ExecutionGraph implements Serializable {
 		for (ExecutionVertex vertex : getAllExecutionVertices()) {
 			Map<AccumulatorRegistry.Metric, Accumulator<?, ?>> taskAccs = vertex.getCurrentExecutionAttempt().getFlinkAccumulators();
 			String prefix = vertex.getSimpleName() + "-subtask_" + vertex.getSubTaskIndex() + "-id_" + vertex.getCurrentExecutionAttempt().getAttemptId();
-			for (Map.Entry<String, Accumulator<?, ?>> entry : accumulatorMap.entrySet()) {
+			for (Map.Entry<AccumulatorRegistry.Metric, Accumulator<?, ?>> entry : taskAccs.entrySet()) {
 				result.put(prefix + entry.getKey(), new SerializedValue<Object>(entry.getValue().getLocalValue()));
 			}
 		}

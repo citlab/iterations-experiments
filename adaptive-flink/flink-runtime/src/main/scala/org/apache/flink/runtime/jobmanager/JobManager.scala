@@ -544,8 +544,10 @@ class JobManager(
 
                     accumulatorResults.put("jobDop",
                       new SerializedValue[Object](new Integer(jobDop)))
+
+                    var totalSlots = instanceManager.getTotalNumberOfSlots
                     accumulatorResults.put("totalNumberOfSlots",
-                      new SerializedValue[Object](new Integer(instanceManager.getTotalNumberOfSlots)))
+                      new SerializedValue[Object](new Integer(totalSlots)))
 
                     val result = new SerializedJobExecutionResult(
                       jobID,

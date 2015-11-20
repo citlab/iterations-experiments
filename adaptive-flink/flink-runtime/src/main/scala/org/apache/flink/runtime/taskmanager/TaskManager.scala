@@ -1064,7 +1064,8 @@ class TaskManager(
       log.info("AI - sending heartbeat to JM with CPU utilization of " + cpuUtilization)
 
        currentJobManager foreach {
-        jm => jm ! decorateMessage(Heartbeat(instanceID, metricsReport, accumulatorEvents, cpuUtilization))
+        jm => jm ! decorateMessage(Heartbeat(instanceID, metricsReport,
+                                             accumulatorEvents, cpuUtilization))
       }
     }
     catch {

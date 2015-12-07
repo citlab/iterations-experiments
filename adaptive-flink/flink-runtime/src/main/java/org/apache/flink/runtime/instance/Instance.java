@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.runtime.jobmanager.scheduler.SlotAvailabilityListener;
@@ -101,7 +102,7 @@ public class Instance {
 		this.resources = resources;
 		this.numberOfSlots = numberOfSlots;
 
-		this.cpuHistoryPerJob = new HashMap<>();
+		this.cpuHistoryPerJob = new ConcurrentHashMap<>();
 
 		this.availableSlots = new ArrayDeque<Integer>(numberOfSlots);
 		for (int i = 0; i < numberOfSlots; i++) {
@@ -194,15 +195,22 @@ public class Instance {
 
 	public void addCpuUtilization(double cpuUtilization) {
 		Set<JobID> recordedJobs = new HashSet<JobID>();
-		for (Slot slot : this.allocatedSlots) {
-			JobID jobID = slot.getJobID();
-			if (!recordedJobs.contains(jobID)) {
-				recordedJobs.add(jobID);
-				if (!cpuHistoryPerJob.containsKey(jobID)) {
-					cpuHistoryPerJob.put(jobID, new ArrayList<Double>(1));
+
+		synchronized (instanceLock) {
+			if (isDead) {
+				return; // no history for the dead
+			}
+
+			for (Slot slot : this.allocatedSlots) {
+				recordedJobs.add(slot.getJobID());
+			}
+
+			for (JobID job : recordedJobs) {
+				if (!cpuHistoryPerJob.containsKey(job)) {
+					cpuHistoryPerJob.put(job, new ArrayList<Double>(1));
 				}
-				cpuHistoryPerJob.get(jobID).add(cpuUtilization);
-				LOG.info("CPU usage {} captured for job {}, worker {}", cpuUtilization, jobID, instanceId);
+				cpuHistoryPerJob.get(job).add(cpuUtilization);
+				LOG.info("CPU usage {} captured for job {}, worker {}", cpuUtilization, job, instanceId);
 			}
 		}
 	}

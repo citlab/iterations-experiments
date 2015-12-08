@@ -166,4 +166,126 @@
         </constructor-arg>
     </bean>
 
+    <!-- suite for cluster testing of kmeans with ExperimentSequence.CrossedParameters -->
+    <bean id="kmeans.adaptive-tests.wally" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <bean class="org.peelframework.core.beans.experiment.ExperimentSequence">
+                <constructor-arg name="parameters">
+                    <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.CrossedParameters">
+                        <constructor-arg name="parameters">
+                            <list>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numIterations" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numCenters" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                            </list>
+                        </constructor-arg>
+                    </bean>
+                </constructor-arg>
+                <constructor-arg name="prototypes">
+
+                    <!-- underprovisioning: 5 nodes initially on 50 GB points data -->
+
+                    <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                        <bean parent="experiment.flink.kmeans.multijobiterations">
+                            <constructor-arg name="name" value="kmeans.underprovisioned.adaptive"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = 40
+                                  datagen.kmeans.points                     = 4216562650
+                                  datagen.kmeans.centers                    = __numCenters__
+                                  numIterations                             = __numIterations__
+                                  useResourcesAdaptively = true
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+                        <bean parent="experiment.flink.kmeans.nativeiterations">
+                            <constructor-arg name="name" value="kmeans.underprovisioned.static"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = 40
+                                  datagen.kmeans.points                     = 4216562650
+                                  datagen.kmeans.centers                    = __numCenters__
+                                  numIterations                             = __numIterations__
+                                  useResourcesAdaptively = false
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+
+                        <!-- TODO: underprovisioning case where max scale-out is optimal ?? -->
+
+
+                        <!-- overprovisioning: 40 nodes initially on just 2 GB points data -->
+
+                        <bean parent="experiment.flink.kmeans.multijobiterations">
+                            <constructor-arg name="name" value="kmeans.overprovisioned.adaptive"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = 320
+                                  datagen.kmeans.points                     = 168662506
+                                  datagen.kmeans.centers                    = __numCenters__
+                                  numIterations                             = __numIterations__
+                                  useResourcesAdaptively = true
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+                        <bean parent="experiment.flink.kmeans.nativeiterations">
+                            <constructor-arg name="name" value="kmeans.overprovisioned.static"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = 320
+                                  datagen.kmeans.points                     = 168662506
+                                  datagen.kmeans.centers                    = __numCenters__
+                                  numIterations                             = __numIterations__
+                                  useResourcesAdaptively = false
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+                    </list>
+
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+    </bean>
+
 </beans>

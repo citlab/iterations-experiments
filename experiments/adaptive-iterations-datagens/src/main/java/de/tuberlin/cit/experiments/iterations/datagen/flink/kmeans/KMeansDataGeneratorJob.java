@@ -84,7 +84,7 @@ public class KMeansDataGeneratorJob {
 		// parse parameters
 
 		final ParameterTool params = ParameterTool.fromArgs(args);
-		final int numDataPoints = params.getInt("points");
+		final long numDataPoints = params.getLong("points");
 		final int k = params.getInt("k");
 		final String outDir = params.get("output", System.getProperty("java.io.tmpdir"));
 		final double stddev = params.getDouble("stddev", RELATIVE_STDDEV);

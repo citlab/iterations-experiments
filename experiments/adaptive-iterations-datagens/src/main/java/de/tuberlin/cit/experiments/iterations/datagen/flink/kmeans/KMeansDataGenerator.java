@@ -11,13 +11,13 @@ public class KMeansDataGenerator extends SplittableIterator<double[]> implements
 	private MeanGeneratorConfiguration[] configurations;
 	private double[] meanProbabilities;
 
-	private int generatedCounter;
-	private int numDataPoints;
+	private long generatedCounter;
+	private long numDataPoints;
 
 	private Random rnd;
 
 	public KMeansDataGenerator(MeanGeneratorConfiguration[] configurations, double[] meanProbabilities,
-			int numDataPoints) {
+			long numDataPoints) {
 		this.configurations = configurations;
 		this.meanProbabilities = meanProbabilities;
 		this.numDataPoints = numDataPoints;
@@ -74,7 +74,6 @@ public class KMeansDataGenerator extends SplittableIterator<double[]> implements
 		return generatedCounter < numDataPoints;
 	}
 
-
 	@Override
 	public Iterator<double[]>[] split(int numPartitions) {
 		KMeansDataGenerator[] iters = new KMeansDataGenerator[numPartitions];
@@ -88,6 +87,6 @@ public class KMeansDataGenerator extends SplittableIterator<double[]> implements
 
 	@Override
 	public int getMaximumNumberOfSplits() {
-		return numDataPoints;
+		return Integer.MAX_VALUE < numDataPoints ? Integer.MAX_VALUE : (int) numDataPoints;
 	}
 }

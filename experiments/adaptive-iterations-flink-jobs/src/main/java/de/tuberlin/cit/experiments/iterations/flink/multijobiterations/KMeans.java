@@ -27,12 +27,18 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.functions.FunctionAnnotation.ForwardedFields;
 import org.apache.flink.api.java.io.TypeSerializerInputFormat;
 import org.apache.flink.api.java.io.TypeSerializerOutputFormat;
+import org.apache.flink.api.java.operators.DataSource;
+import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+
+import static org.apache.flink.api.common.typeinfo.BasicTypeInfo.DOUBLE_TYPE_INFO;
+import static org.apache.flink.api.common.typeinfo.BasicTypeInfo.INT_TYPE_INFO;
 
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Centroid;
 import de.tuberlin.cit.experiments.iterations.flink.util.clustering.Point;
@@ -94,34 +100,35 @@ public class KMeans {
 			return;
 		}
 
-		AdaptiveResourceRecommender resourceRecommender = new AdaptiveResourceRecommender();
+		AdaptiveResourceRecommender resourceRecommender = new AdaptiveResourceRecommender(0.75, 8);
 
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
 		JobExecutionResult lastExecutionResult = null;
 
-		DataSet<Centroid> centroids = env.readCsvFile(centersPath)
-				.fieldDelimiter(" ")
-				.includeFields(true, true, true)
-				.types(Integer.class, Double.class, Double.class)
-				.map(new TupleCentroidConverter());
-
-		for(int i = 0; i < numIterations; i++) {
+		for(int i = 1; i <= numIterations; i++) {
 
 			if (useResourcesAdaptively && lastExecutionResult != null) {
-
 				int proposedParallelism = resourceRecommender.computeNewParallelism(lastExecutionResult);
-
 				env.setParallelism(proposedParallelism);
 			}
 
-			// FIXME: read-in updated centroids (there's a bug here.. ArrayOutOfBoundException on creating the input
-			// splits for HDFS
-			// if (i != 0) {
-			//	centroids = env.readFile(new TypeSerializerInputFormat<>((centroids.getType())),
-			//			(intermediateResultsPath + "/iteration_" + Integer.toString(i - 1)));
-			// }
+			DataSet<Centroid> centroids; // centroid sources all with parallelism 1, because
+
+			if (i == 1) {
+				centroids = env.readCsvFile(centersPath)
+						.fieldDelimiter(" ")
+						.includeFields(true, true, true)
+						.types(Integer.class, Double.class, Double.class).setParallelism(1)
+						.map(new TupleCentroidConverter());
+			} else {
+				@SuppressWarnings("unchecked")
+				DataSource<Tuple3<Integer,Double,Double>> centroidsTuples = env.readFile(new TypeSerializerInputFormat<>((new TupleTypeInfo(Tuple3.class, INT_TYPE_INFO, DOUBLE_TYPE_INFO, DOUBLE_TYPE_INFO))),
+						(intermediateResultsPath + "/iteration_" + Integer.toString(i - 1)));
+				centroidsTuples.setParallelism(1);
+				centroids = centroidsTuples.map(new TupleCentroidConverter());
+			}
 
 			// get input data
 			DataSet<Point> points = env.readCsvFile(pointsPath)
@@ -142,12 +149,11 @@ public class KMeans {
 			// Write out centroids for next iteration
 			centroids.write(new TypeSerializerOutputFormat<Centroid>(),
 					(intermediateResultsPath + "/iteration_" + Integer.toString(i)),
-					FileSystem.WriteMode.OVERWRITE);
+					FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 
-			lastExecutionResult = env.execute("KMeans Example");
+			lastExecutionResult = env.execute("KMeans - Iteration " + Integer.toString(i));
 
 			System.out.println("AI: Iteration " + i + " took " + lastExecutionResult.getNetRuntime());
-
 			resourceRecommender.addIterationResultToHistory(lastExecutionResult);
 		}
 
@@ -156,6 +162,12 @@ public class KMeans {
 				.includeFields(true, true)
 				.types(Double.class, Double.class)
 				.map(new TuplePointConverter());
+
+		DataSet<Centroid> centroids = env.readCsvFile(centersPath)
+				.fieldDelimiter(" ")
+				.includeFields(true, true, true)
+				.types(Integer.class, Double.class, Double.class)
+				.map(new TupleCentroidConverter()).setParallelism(1);
 
 		centroids = env.readFile(new TypeSerializerInputFormat<>((centroids.getType())),
 				(intermediateResultsPath + "/iteration_" + Integer.toString(numIterations - 1)));
@@ -166,11 +178,10 @@ public class KMeans {
 
 		clusteredPoints.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
-		env.execute("KMeans Example");
+		env.execute("KMeans - Write-out points");
 
 		resourceRecommender.printExecutionSummary();
 	}
-
 
 	// *************************************************************************
 	//     USER FUNCTIONS

@@ -8,12 +8,6 @@ import org.apache.flink.api.common.JobExecutionResult;
 
 public class AdaptiveResourceRecommender {
 
-	// based on a few experiments with k-means it looks like (for k-means on wally) an average cpu utilization of
-	// around 25% for each of the workers is best, so we'll scale up or down more or less aggressively to this
-	// target utilization
-	private static final Double TARGET_UTILIZATION = 0.75;
-	private static final int MIN_PARALLELISM = 1;
-
 	private final Double targetUtilization;
 	private final int minParallelism;
 	private List<JobExecutionResult> iterationsHistory = new ArrayList<>();
@@ -23,10 +17,6 @@ public class AdaptiveResourceRecommender {
 		this.minParallelism = minParallelism;
 		System.out.println("AI -- New recommender initialized with target utilization "
 				+ targetUtilization + " and min parallelism " + minParallelism);
-	}
-
-	public AdaptiveResourceRecommender() {
-		this(TARGET_UTILIZATION, MIN_PARALLELISM);
 	}
 
 	public int computeNewParallelism(JobExecutionResult lastResult) {

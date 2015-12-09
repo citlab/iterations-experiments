@@ -218,7 +218,7 @@
                                 ]]></value>
                             </constructor-arg>
                         </bean>
-                        <bean parent="experiment.flink.kmeans.nativeiterations">
+                        <bean parent="experiment.flink.kmeans.multijobiterations">
                             <constructor-arg name="name" value="kmeans.underprovisioned.static"/>
                             <constructor-arg name="inputs">
                                 <set>
@@ -262,7 +262,7 @@
                                 ]]></value>
                             </constructor-arg>
                         </bean>
-                        <bean parent="experiment.flink.kmeans.nativeiterations">
+                        <bean parent="experiment.flink.kmeans.multijobiterations">
                             <constructor-arg name="name" value="kmeans.overprovisioned.static"/>
                             <constructor-arg name="inputs">
                                 <set>

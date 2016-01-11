@@ -44,7 +44,7 @@ public class AdaptiveResourceRecommender {
 		System.out.println("AI - current average CPU utilization: " + currentUtilization);
 
 		Double targetUtilizationRatio = (currentUtilization / targetUtilization);
-		int newParallelism = (int) ((targetUtilizationRatio * targetUtilizationRatio) * currentParallelism);
+		int newParallelism = (int) (targetUtilizationRatio * currentParallelism);
 
 		if (newParallelism > totalNumberOfSlots) {
 			newParallelism = totalNumberOfSlots;

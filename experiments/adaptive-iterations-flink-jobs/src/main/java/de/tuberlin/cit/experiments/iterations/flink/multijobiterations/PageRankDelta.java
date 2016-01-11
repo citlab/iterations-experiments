@@ -67,6 +67,10 @@ public class PageRankDelta extends AbstractPageRank {
 
 		// assign initial rank to pages
 		DataSet<Tuple2<Long, Double>> pagesWithRanks = links.groupBy(0).reduceGroup(new RankAssigner(1.0d)); // 1.0d / numPages ?
+
+		// just to have the correct number for the parameter
+		System.out.println(">>>> number of pages initially: " + pagesWithRanks.count());
+
 		DataSet<Tuple2<Long, Double>> delta = pagesWithRanks.map(new InitialDeltaBuilder(numPages));
 
 		// build adjacency list from link input
@@ -98,13 +102,13 @@ public class PageRankDelta extends AbstractPageRank {
 			pagesWithRanks = pagesWithRanks.join(delta).where(0).equalTo(0).with(new SolutionJoinAndStat());
 
 			// Write intermediate results for next iteration
-			if(i < maxIterations && activePages > 0) {
+			if (i < maxIterations && activePages > 0) {
 				delta.write(new TypeSerializerOutputFormat<Tuple2<Long, Double>>(),
 						(intermediateResultsPath + "/iteration_delta_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
 				pagesWithRanks.write(new TypeSerializerOutputFormat<Tuple2<Long, Double>>(),
 						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
 
-				lastExecutionResult = env.execute("Connected Components multi job");
+				lastExecutionResult = env.execute("Page Rank: iteration " + (i + 1));
 				resourceRecommender.addIterationResultToHistory(lastExecutionResult);
 				System.out.println("Active pages after iteration: " + activePages);
 				AccumulatorUtils.dumpAccumulators(lastExecutionResult, i + 1);
@@ -113,7 +117,7 @@ public class PageRankDelta extends AbstractPageRank {
 			} else {
 				pagesWithRanks.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
 
-				JobExecutionResult result = env.execute("Page Rank multi job with deltas");
+				JobExecutionResult result = env.execute("Page Rank: emit final results");
 				resourceRecommender.printExecutionSummary();
 				AccumulatorUtils.dumpAccumulators(result, i);
 			}

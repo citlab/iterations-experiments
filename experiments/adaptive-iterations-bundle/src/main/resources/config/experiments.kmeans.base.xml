@@ -19,6 +19,7 @@
             ]]>
             </value>
         </constructor-arg>
+        <constructor-arg name="timeout"><value>3600</value></constructor-arg>
     </bean>
 
     <!--************************************************************************
@@ -107,7 +108,7 @@
                         <value><![CDATA[
                                   datagen.kmeans.points = 200000
                                   datagen.kmeans.centers = 3
-                                  numIterations = 10
+                                  numIterations = 5
                                   useResourcesAdaptively = true
                                 ]]></value>
                     </constructor-arg>
@@ -128,21 +129,20 @@
                             <ref bean="dataset.kmeans.generated.centers" />
                         </set>
                     </constructor-arg>
-                    <constructor-arg name="config">
+                    <constructor-arg name="config"> <!-- 1 GB points data -->
                         <value><![CDATA[
-                                  datagen.kmeans.points = 40000000
+                                  datagen.kmeans.points = 84331253
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
-                                  system.default.config.slaves              = ${env.slaves.all.hosts}
-                                  system.default.config.parallelism.total   = ${env.slaves.all.total.parallelism}
-                                  useResourcesAdaptively = true
+                                  system.default.config.slaves              = ${env.slaves.top005.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.top005.total.parallelism}
+                                  useResourcesAdaptively = false
                                 ]]></value>
                     </constructor-arg>
                 </bean>
             </list>
         </constructor-arg>
     </bean>
-
 
     <bean id="kmeans.underprovisioned.static.wally" class="org.peelframework.core.beans.experiment.ExperimentSuite">
         <constructor-arg name="experiments">
@@ -160,7 +160,7 @@
                                   datagen.kmeans.points = 400000000
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
-                                  system.default.config.slaves              = ${env.slaves.top020.hosts}
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
                                   system.default.config.parallelism.total   = 40
                                   useResourcesAdaptively = false
                                 ]]></value>
@@ -181,12 +181,12 @@
                             <ref bean="dataset.kmeans.generated.centers" />
                         </set>
                     </constructor-arg>
-                    <constructor-arg name="config"><!--1 GB of points-->
+                    <constructor-arg name="config"><!-- 40 GB of points-->
                         <value><![CDATA[
-                                  datagen.kmeans.points = 84331253
+                                  datagen.kmeans.points = 3373250120
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
-                                  system.default.config.slaves              = ${env.slaves.top040.hosts}
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
                                   system.default.config.parallelism.total   = 40
                                   useResourcesAdaptively = true
                                 ]]></value>
@@ -209,7 +209,7 @@
                     </constructor-arg>
                     <constructor-arg name="config">
                         <value><![CDATA[
-                                  datagen.kmeans.points = 168662506
+                                  datagen.kmeans.points = 337325012
                                   datagen.kmeans.centers = 5
                                   numIterations = 10
                                   system.default.config.slaves              = ${env.slaves.top040.hosts}
@@ -233,9 +233,9 @@
                             <ref bean="dataset.kmeans.generated.centers" />
                         </set>
                     </constructor-arg>
-                    <constructor-arg name="config"><!-- 1 GB of points -->
+                    <constructor-arg name="config"><!-- 2 GB of points -->
                         <value><![CDATA[
-                                  datagen.kmeans.points = 168662506
+                                  datagen.kmeans.points = 337325012
                                   datagen.kmeans.centers = 5
                                   numIterations = 10
                                   system.default.config.slaves              = ${env.slaves.top040.hosts}
@@ -247,5 +247,8 @@
             </list>
         </constructor-arg>
     </bean>
+
+
+
 
 </beans>

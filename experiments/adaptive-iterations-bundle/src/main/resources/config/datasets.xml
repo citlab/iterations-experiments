@@ -23,4 +23,23 @@
         <constructor-arg name="fs" ref="hdfs-2.7.1"/>
     </bean>
 
+    <bean id="dataset.1gb-twitter-rv" class="org.peelframework.core.beans.data.CopiedDataSet">
+        <constructor-arg name="src" value="${app.path.datasets}/first_gb_twitter_rv.net"/>
+        <constructor-arg name="dst" value="${system.hadoop-2.path.input}/edges"/>
+        <constructor-arg name="fs" ref="hdfs-2.7.1"/>
+    </bean>
+
+
+    <bean id="dataset.half-twitter-rv" class="org.peelframework.core.beans.data.CopiedDataSet">
+        <constructor-arg name="src" value="${app.path.datasets}/half_twitter_rv.net"/>
+        <constructor-arg name="dst" value="${system.hadoop-2.path.input}/edges"/>
+        <constructor-arg name="fs" ref="hdfs-2.7.1"/>
+    </bean>
+
+    <bean id="dataset.double-twitter-rv" class="org.peelframework.core.beans.data.CopiedDataSet">
+        <constructor-arg name="src" value="${app.path.datasets}/double_twitter_rv.net"/>
+        <constructor-arg name="dst" value="${system.hadoop-2.path.input}/edges"/>
+        <constructor-arg name="fs" ref="hdfs-2.7.1"/>
+    </bean>
+
 </beans>

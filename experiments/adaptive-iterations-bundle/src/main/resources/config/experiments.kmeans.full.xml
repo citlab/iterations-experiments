@@ -84,18 +84,11 @@
                                     <constructor-arg name="name" value="numberOfPoints" />
                                     <constructor-arg name="vals">
                                         <list>
-                                            <value>421656265</value> <!-- 5 GB -->
-                                            <!--<value>400000000</value>-->
-                                            <!--<value>800000000</value>-->
-                                        </list>
-                                    </constructor-arg>
-                                </bean>
-                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
-                                    <constructor-arg name="name" value="numIterationsRun" />
-                                    <constructor-arg name="vals">
-                                        <list>
-                                            <!--<value>5</value>-->
-                                            <value>10</value>
+                                            <!--<value>50000</value>--> <!-- setup test-->
+                                            <!--<value>421656265</value>-->  <!-- 5 GB -->
+                                            <!--<value>843312530</value>--> <!-- 10 GB -->
+                                            <!--<value>1686625060</value>--> <!-- 20 GB -->
+                                            <value>4216562650</value> <!-- 50 GB -->
                                         </list>
                                     </constructor-arg>
                                 </bean>
@@ -113,6 +106,11 @@
                                             <value>top032</value>
                                             <value>top036</value>
                                             <value>top040</value>
+                                            <value>top044</value>
+                                            <value>top048</value>
+                                            <value>top052</value>
+                                            <value>top056</value>
+                                            <value>top060</value>
                                         </list>
                                     </constructor-arg>
                                 </bean>
@@ -136,26 +134,7 @@
                                   system.default.config.parallelism.total   = ${env.slaves.__topXXX__.total.parallelism}
                                   datagen.kmeans.points                     = __numberOfPoints__
                                   datagen.kmeans.centers                    = 5
-                                  numIterations                             = __numIterationsRun__
-                                  useResourcesAdaptively = false
-                                ]]></value>
-                            </constructor-arg>
-                        </bean>
-                        <bean parent="experiment.flink.kmeans.nativeiterations">
-                            <constructor-arg name="name" value="kmeans.native.__numberOfPoints__points.__topXXX__"/>
-                            <constructor-arg name="inputs">
-                                <set>
-                                    <ref bean="dataset.kmeans.generated.points" />
-                                    <ref bean="dataset.kmeans.generated.centers"/>
-                                </set>
-                            </constructor-arg>
-                            <constructor-arg name="config">
-                                <value><![CDATA[
-                                  system.default.config.slaves              = ${env.slaves.__topXXX__.hosts}
-                                  system.default.config.parallelism.total   = ${env.slaves.__topXXX__.total.parallelism}
-                                  datagen.kmeans.points                     = __numberOfPoints__
-                                  datagen.kmeans.centers                    = 5
-                                  numIterations                             = __numIterationsRun__
+                                  numIterations                             = 10
                                   useResourcesAdaptively = false
                                 ]]></value>
                             </constructor-arg>
@@ -167,7 +146,7 @@
     </bean>
 
     <!-- suite for cluster testing of kmeans with ExperimentSequence.CrossedParameters -->
-    <bean id="kmeans.adaptive-tests.wally" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+    <bean id="kmeans.adaptive-tests.underprovisioning.wally" class="org.peelframework.core.beans.experiment.ExperimentSuite">
         <constructor-arg name="experiments">
             <bean class="org.peelframework.core.beans.experiment.ExperimentSequence">
                 <constructor-arg name="parameters">
@@ -190,61 +169,110 @@
                                         </list>
                                     </constructor-arg>
                                 </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numPoints" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>4216562650</value> <!-- 50 GB -->
+                                            <value>8433125300</value> <!-- 100 GB -->
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                            </list>
+                        </constructor-arg>
+                    </bean>
+                </constructor-arg>
+                <constructor-arg name="prototypes">
+                    <list value-type="org.peelframework.core.beans.experiment.Experiment">
+                    <bean parent="experiment.flink.kmeans.multijobiterations">
+                            <constructor-arg name="name" value="kmeans.underprovisioned.__numPoints__-points.adaptive"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = 40
+                                  datagen.kmeans.points                     = __numPoints__
+                                  datagen.kmeans.centers                    = __numCenters__
+                                  numIterations                             = __numIterations__
+                                  useResourcesAdaptively = true
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+                        <bean parent="experiment.flink.kmeans.multijobiterations">
+                            <constructor-arg name="name" value="kmeans.underprovisioned.__numPoints__-points.static"/>
+                            <constructor-arg name="inputs">
+                                <set>
+                                    <ref bean="dataset.kmeans.generated.points" />
+                                    <ref bean="dataset.kmeans.generated.centers"/>
+                                </set>
+                            </constructor-arg>
+                            <constructor-arg name="config">
+                                <value><![CDATA[
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = 40
+                                  datagen.kmeans.points                     = __numPoints__
+                                  datagen.kmeans.centers                    = __numCenters__
+                                  numIterations                             = __numIterations__
+                                  useResourcesAdaptively = false
+                                ]]></value>
+                            </constructor-arg>
+                        </bean>
+                    </list>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+    </bean>
+
+    <!-- suite for cluster testing of kmeans with ExperimentSequence.CrossedParameters -->
+    <bean id="kmeans.adaptive-tests.overprovisioning.wally" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+        <constructor-arg name="experiments">
+            <bean class="org.peelframework.core.beans.experiment.ExperimentSequence">
+                <constructor-arg name="parameters">
+                    <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.CrossedParameters">
+                        <constructor-arg name="parameters">
+                            <list>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numIterations" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numCenters" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <value>10</value>
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
+                                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                                    <constructor-arg name="name" value="numPoints" />
+                                    <constructor-arg name="vals">
+                                        <list>
+                                            <!--<value>168662506</value> &lt;!&ndash; 2 GB &ndash;&gt;-->
+                                            <value>421656265</value> <!-- 5 GB -->
+                                            <value>843312530</value> <!-- 10 GB -->
+                                        </list>
+                                    </constructor-arg>
+                                </bean>
                             </list>
                         </constructor-arg>
                     </bean>
                 </constructor-arg>
                 <constructor-arg name="prototypes">
 
-                    <!-- underprovisioning: 5 nodes initially on 50 GB points data -->
-
                     <list value-type="org.peelframework.core.beans.experiment.Experiment">
-                        <bean parent="experiment.flink.kmeans.multijobiterations">
-                            <constructor-arg name="name" value="kmeans.underprovisioned.adaptive"/>
-                            <constructor-arg name="inputs">
-                                <set>
-                                    <ref bean="dataset.kmeans.generated.points" />
-                                    <ref bean="dataset.kmeans.generated.centers"/>
-                                </set>
-                            </constructor-arg>
-                            <constructor-arg name="config">
-                                <value><![CDATA[
-                                  system.default.config.slaves              = ${env.slaves.all.hosts}
-                                  system.default.config.parallelism.total   = 40
-                                  datagen.kmeans.points                     = 4216562650
-                                  datagen.kmeans.centers                    = __numCenters__
-                                  numIterations                             = __numIterations__
-                                  useResourcesAdaptively = true
-                                ]]></value>
-                            </constructor-arg>
-                        </bean>
-                        <bean parent="experiment.flink.kmeans.multijobiterations">
-                            <constructor-arg name="name" value="kmeans.underprovisioned.static"/>
-                            <constructor-arg name="inputs">
-                                <set>
-                                    <ref bean="dataset.kmeans.generated.points" />
-                                    <ref bean="dataset.kmeans.generated.centers"/>
-                                </set>
-                            </constructor-arg>
-                            <constructor-arg name="config">
-                                <value><![CDATA[
-                                  system.default.config.slaves              = ${env.slaves.all.hosts}
-                                  system.default.config.parallelism.total   = 40
-                                  datagen.kmeans.points                     = 4216562650
-                                  datagen.kmeans.centers                    = __numCenters__
-                                  numIterations                             = __numIterations__
-                                  useResourcesAdaptively = false
-                                ]]></value>
-                            </constructor-arg>
-                        </bean>
-
-                        <!-- TODO: underprovisioning case where max scale-out is optimal ?? -->
-
-
-                        <!-- overprovisioning: 40 nodes initially on just 2 GB points data -->
 
                         <bean parent="experiment.flink.kmeans.multijobiterations">
-                            <constructor-arg name="name" value="kmeans.overprovisioned.adaptive"/>
+                            <constructor-arg name="name" value="kmeans.overprovisioned.__numPoints__-points.adaptive"/>
+                            <constructor-arg name="runs" value="7"/>
                             <constructor-arg name="inputs">
                                 <set>
                                     <ref bean="dataset.kmeans.generated.points" />
@@ -255,7 +283,7 @@
                                 <value><![CDATA[
                                   system.default.config.slaves              = ${env.slaves.all.hosts}
                                   system.default.config.parallelism.total   = 320
-                                  datagen.kmeans.points                     = 168662506
+                                  datagen.kmeans.points                     = __numPoints__
                                   datagen.kmeans.centers                    = __numCenters__
                                   numIterations                             = __numIterations__
                                   useResourcesAdaptively = true
@@ -263,7 +291,8 @@
                             </constructor-arg>
                         </bean>
                         <bean parent="experiment.flink.kmeans.multijobiterations">
-                            <constructor-arg name="name" value="kmeans.overprovisioned.static"/>
+                            <constructor-arg name="name" value="kmeans.overprovisioned.__numPoints__-points.static"/>
+                            <constructor-arg name="runs" value="7"/>
                             <constructor-arg name="inputs">
                                 <set>
                                     <ref bean="dataset.kmeans.generated.points" />
@@ -274,13 +303,14 @@
                                 <value><![CDATA[
                                   system.default.config.slaves              = ${env.slaves.all.hosts}
                                   system.default.config.parallelism.total   = 320
-                                  datagen.kmeans.points                     = 168662506
+                                  datagen.kmeans.points                     = __numPoints__
                                   datagen.kmeans.centers                    = __numCenters__
                                   numIterations                             = __numIterations__
                                   useResourcesAdaptively = false
                                 ]]></value>
                             </constructor-arg>
                         </bean>
+
                     </list>
 
                 </constructor-arg>

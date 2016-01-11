@@ -100,7 +100,7 @@ public class KMeans {
 			return;
 		}
 
-		AdaptiveResourceRecommender resourceRecommender = new AdaptiveResourceRecommender(0.75, 8);
+		AdaptiveResourceRecommender resourceRecommender = new AdaptiveResourceRecommender(0.70, 8);
 
 		// set up execution environment
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();

@@ -198,7 +198,7 @@
                             <constructor-arg name="name" value="pageRank.flink.twitter-rv.multiJob.__topXXX__"/>
                             <constructor-arg name="runs" value="1"/>
                             <constructor-arg name="inputs">
-                                <set><ref bean="dataset.half-twitter-rv" /></set>
+                                <set><ref bean="dataset.twitter-rv" /></set>
                             </constructor-arg>
 
                             <!-- 1 gb dataset include 14683855 pages-->
@@ -206,7 +206,7 @@
                             <!-- the full twitter.rv dataset includes 41652230 pages -->
                             <constructor-arg name="config">
                                 <value><![CDATA[
-                                          numPages = 31351942
+                                          numPages = 41652230
                                           numIterations = 50
                                           threshold = 0.001
                                           system.default.config.slaves              = ${env.slaves.__topXXX__.hosts}

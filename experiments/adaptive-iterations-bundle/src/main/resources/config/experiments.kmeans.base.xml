@@ -134,8 +134,8 @@
                                   datagen.kmeans.points = 84331253
                                   datagen.kmeans.centers = 10
                                   numIterations = 10
-                                  system.default.config.slaves              = ${env.slaves.top005.hosts}
-                                  system.default.config.parallelism.total   = ${env.slaves.top005.total.parallelism}
+                                  system.default.config.slaves              = ${env.slaves.all.hosts}
+                                  system.default.config.parallelism.total   = ${env.slaves.all.total.parallelism}
                                   useResourcesAdaptively = false
                                 ]]></value>
                     </constructor-arg>

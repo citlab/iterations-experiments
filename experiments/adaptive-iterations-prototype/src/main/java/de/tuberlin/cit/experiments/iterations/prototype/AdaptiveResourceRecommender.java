@@ -66,12 +66,19 @@ public class AdaptiveResourceRecommender {
 
 		int i = 1;
 
+		Double cpuUtilizationAverageSum = 0.0;
+
 		for (JobExecutionResult result : iterationsHistory) {
+
+			Double cpuUtilizationAverage = getAverageUtilization(retrieveValidCpuHistories(result.getAllAccumulatorResults()));
+			cpuUtilizationAverageSum += cpuUtilizationAverage;
+
 			System.out.println("AI - " + i++ + ". iteration: " + result.getNetRuntime() + " ms, " +
 							"DoP of " + retrieveJobDop(result.getAllAccumulatorResults()) + ", " +
-					getAverageUtilization(retrieveValidCpuHistories(result.getAllAccumulatorResults())) +
-					" CPU utilization average");
+					cpuUtilizationAverage + " CPU utilization average");
 		}
+
+		System.out.println("Avg over all iterations: " +  (cpuUtilizationAverageSum / iterationsHistory.size()));
 	}
 
 	private Double getAverageUtilization(List<List<Double>> cpuStatistics) {

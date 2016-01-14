@@ -95,6 +95,7 @@ public class PageRankDelta extends AbstractPageRank {
 						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i - 1)));
 			}
 
+			// compute new ranks
 			delta = delta.join(adjacencyListInput).where(0).equalTo(0).with(new DeltaDistributorAndStat(DAMPENING_FACTOR))
 					.groupBy(0)
 					.reduceGroup(new AggAndFilterStat(threshold));

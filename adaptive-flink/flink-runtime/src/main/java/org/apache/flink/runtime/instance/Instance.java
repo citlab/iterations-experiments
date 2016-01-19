@@ -210,7 +210,6 @@ public class Instance {
 					cpuHistoryPerJob.put(job, new ArrayList<Double>(1));
 				}
 				cpuHistoryPerJob.get(job).add(cpuUtilization);
-				LOG.info("CPU usage {} captured for job {}, worker {}", cpuUtilization, job, instanceId);
 			}
 		}
 	}

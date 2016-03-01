@@ -20,6 +20,7 @@ package de.tuberlin.cit.experiments.iterations.flink.multijobiterations;
 
 import java.util.Collection;
 
+import de.tuberlin.cit.experiments.iterations.flink.util.AccumulatorUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
@@ -154,6 +155,7 @@ public class KMeans {
 			lastExecutionResult = env.execute("KMeans - Iteration " + Integer.toString(i));
 
 			System.out.println("AI: Iteration " + i + " took " + lastExecutionResult.getNetRuntime());
+			AccumulatorUtils.dumpAccumulators(lastExecutionResult, i);
 			resourceRecommender.addIterationResultToHistory(lastExecutionResult);
 		}
 

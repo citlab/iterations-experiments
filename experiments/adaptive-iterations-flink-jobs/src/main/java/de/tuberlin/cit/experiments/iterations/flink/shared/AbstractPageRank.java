@@ -9,6 +9,7 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichFlatJoinFunction;
 import org.apache.flink.api.common.functions.RichGroupReduceFunction;
 import org.apache.flink.api.common.functions.RichJoinFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.functions.FunctionAnnotation;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
@@ -276,6 +277,31 @@ public abstract class AbstractPageRank implements ProgramDescription {
 			Long v2 = Long.parseLong(line[1]);
 			out.collect(new Tuple2<Long, Long>(v1, v2));
 			out.collect(new Tuple2<Long, Long>(v2, v1));
+		}
+	}
+
+	public static final class RecordsCounter<T> extends RichMapFunction<T, T> {
+		private final String aggName;
+		private long records;
+
+		public RecordsCounter(String aggName) {
+			this.aggName = aggName;
+		}
+
+		@Override
+		public void open(Configuration parameters) throws Exception {
+			this.records = 0;
+		}
+
+		@Override
+		public T map(T record) throws Exception {
+			this.records++;
+			return record;
+		}
+
+		@Override
+		public void close() throws Exception {
+			getRuntimeContext().getLongCounter(aggName).add(this.records);
 		}
 	}
 }

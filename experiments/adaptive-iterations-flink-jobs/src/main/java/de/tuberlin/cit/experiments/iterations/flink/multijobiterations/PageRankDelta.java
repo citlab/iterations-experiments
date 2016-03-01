@@ -48,6 +48,7 @@ import org.apache.flink.core.fs.FileSystem;
 public class PageRankDelta extends AbstractPageRank {
 
 	private static final double DAMPENING_FACTOR = 0.85;
+	private static final String ACTIVE_DELTA_PAGES_COUNTER = "deltaActivePages";
 
 	// *************************************************************************
 	//     PROGRAM
@@ -68,9 +69,6 @@ public class PageRankDelta extends AbstractPageRank {
 		// assign initial rank to pages
 		DataSet<Tuple2<Long, Double>> pagesWithRanks = links.groupBy(0).reduceGroup(new RankAssigner(1.0d)); // 1.0d / numPages ?
 
-		// just to have the correct number for the parameter
-		System.out.println(">>>> number of pages initially: " + pagesWithRanks.count());
-
 		DataSet<Tuple2<Long, Double>> delta = pagesWithRanks.map(new InitialDeltaBuilder(numPages));
 
 		// build adjacency list from link input
@@ -78,6 +76,9 @@ public class PageRankDelta extends AbstractPageRank {
 				links.groupBy(0).reduceGroup(new BuildOutgoingEdgeList());
 
 		long activePages = delta.count();
+
+		// just to have the correct number for the parameter
+		System.out.println(">>>> number of pages initially: " + activePages);
 
 		// Run Page Rank for maxIterations
 		for(int i = 0; i < maxIterations && activePages > 0; i++) {
@@ -99,28 +100,28 @@ public class PageRankDelta extends AbstractPageRank {
 			delta = delta.join(adjacencyListInput).where(0).equalTo(0).with(new DeltaDistributorAndStat(DAMPENING_FACTOR))
 					.groupBy(0)
 					.reduceGroup(new AggAndFilterStat(threshold));
-			activePages = delta.count();
+
+			// don't do this here (its results in a second job!): activePages = delta.count();
+			delta = delta.map(new RecordsCounter<Tuple2<Long, Double>>(ACTIVE_DELTA_PAGES_COUNTER));
 			pagesWithRanks = pagesWithRanks.join(delta).where(0).equalTo(0).with(new SolutionJoinAndStat());
 
-			// Write intermediate results for next iteration
-			if (i < maxIterations && activePages > 0) {
+			// write results
+			if (i < maxIterations) {
 				delta.write(new TypeSerializerOutputFormat<Tuple2<Long, Double>>(),
 						(intermediateResultsPath + "/iteration_delta_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
 				pagesWithRanks.write(new TypeSerializerOutputFormat<Tuple2<Long, Double>>(),
 						(intermediateResultsPath + "/iteration_solution_" + Integer.toString(i)), FileSystem.WriteMode.OVERWRITE);
 
 				lastExecutionResult = env.execute("Page Rank: iteration " + (i + 1));
-				resourceRecommender.addIterationResultToHistory(lastExecutionResult);
-				System.out.println("Active pages after iteration: " + activePages);
-				AccumulatorUtils.dumpAccumulators(lastExecutionResult, i + 1);
+				activePages = lastExecutionResult.getAccumulatorResult(ACTIVE_DELTA_PAGES_COUNTER);
+				AccumulatorUtils.dumpAccumulators(lastExecutionResult, i);
 
-				// emit final result
-			} else {
-				pagesWithRanks.writeAsCsv(outputPath, "\n", " ", FileSystem.WriteMode.OVERWRITE);
-
-				JobExecutionResult result = env.execute("Page Rank: emit final results");
-				resourceRecommender.printExecutionSummary();
-				AccumulatorUtils.dumpAccumulators(result, i);
+				if (activePages > 0) {
+					resourceRecommender.addIterationResultToHistory(lastExecutionResult);
+					System.out.println("Active pages after iteration: " + activePages);
+				} else {
+					resourceRecommender.printExecutionSummary();
+				}
 			}
 		}
 	}

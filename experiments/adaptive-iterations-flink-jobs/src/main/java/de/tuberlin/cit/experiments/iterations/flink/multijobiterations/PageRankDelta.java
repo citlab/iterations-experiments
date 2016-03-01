@@ -63,7 +63,7 @@ public class PageRankDelta extends AbstractPageRank {
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 		JobExecutionResult lastExecutionResult = null;
 
-		DataSet<Tuple2<Long, Long>> links = env.readTextFile(linksPath).filter(new FilterComment()).flatMap(new UndirectEdge());
+		DataSet<Tuple2<Long, Long>> links = env.readTextFile(linksPath).filter(new FilterComment()).map(new DirectEdge());
 
 		// assign initial rank to pages
 		DataSet<Tuple2<Long, Double>> pagesWithRanks = links.groupBy(0).reduceGroup(new RankAssigner(1.0d)); // 1.0d / numPages ?

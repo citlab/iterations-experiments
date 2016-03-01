@@ -252,6 +252,21 @@ public abstract class AbstractPageRank implements ProgramDescription {
 	 * Undirected edges by emitting for each input edge the input edges itself and an inverted
 	 * version.
 	 */
+	public static final class DirectEdge implements MapFunction<String, Tuple2<Long, Long>> {
+
+		@Override
+		public Tuple2<Long, Long> map(String edge) throws Exception {
+			String[] line = edge.split("\t");
+			Long v1 = Long.parseLong(line[0]);
+			Long v2 = Long.parseLong(line[1]);
+			return new Tuple2<Long, Long>(v1, v2);
+		}
+	}
+
+	/**
+	 * Undirected edges by emitting for each input edge the input edges itself and an inverted
+	 * version.
+	 */
 	public static final class UndirectEdge implements FlatMapFunction<String, Tuple2<Long, Long>> {
 
 		@Override

@@ -1,0 +1,3 @@
+[submodule "custom-flink"]
+	path = custom-flink
+	url = git@github.com:citlab/rm-flink.git

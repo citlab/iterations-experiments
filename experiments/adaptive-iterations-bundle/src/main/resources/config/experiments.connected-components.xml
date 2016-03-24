@@ -29,7 +29,7 @@
     * Experiments
     *************************************************************************-->
 
-    <bean id="experiment.flink.connectedComponents.iterations" parent="experiment.flink-0.9.0" abstract="true">
+    <bean id="experiment.flink.connectedComponents.iterations" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.ConnectedComponents \
@@ -46,7 +46,7 @@
         </constructor-arg>
     </bean>
 
-    <bean id="experiment.flink.connectedComponents.deltaIterations" parent="experiment.flink-0.9.0" abstract="true">
+    <bean id="experiment.flink.connectedComponents.deltaIterations" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.ConnectedComponentsDelta \
@@ -63,7 +63,7 @@
         </constructor-arg>
     </bean>
 
-    <bean id="experiment.flink.connectedComponents.multiJob" parent="experiment.flink-0.9.0" abstract="true">
+    <bean id="experiment.flink.connectedComponents.multiJob" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.multijobiterations.ConnectedComponents \

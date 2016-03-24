@@ -24,7 +24,7 @@
     * Experiments
     *************************************************************************-->
 
-    <bean id="experiment.flink.pageRank-threshold.deltaIterations" parent="experiment.flink-0.9.0" abstract="true">
+    <bean id="experiment.flink.pageRank-threshold.deltaIterations" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.PageRankDelta \
@@ -43,7 +43,7 @@
         </constructor-arg>
     </bean>
 
-    <bean id="experiment.flink.pageRank-threshold.multiJob" parent="experiment.flink-0.9.0" abstract="true">
+    <bean id="experiment.flink.pageRank-threshold.multiJob" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.multijobiterations.PageRankDelta \

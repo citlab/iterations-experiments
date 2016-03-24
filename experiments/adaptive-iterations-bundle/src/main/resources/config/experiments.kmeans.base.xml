@@ -8,7 +8,7 @@
     *************************************************************************-->
 
     <bean id="datagen.kmeans" class="org.peelframework.flink.beans.job.FlinkJob">
-        <constructor-arg name="runner" ref="flink-0.9.0"/>
+        <constructor-arg name="runner" ref="flink-1.0.0"/>
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.datagen.flink.kmeans.KMeansDataGeneratorJob        \
@@ -49,7 +49,7 @@
     </bean>
 
     <!-- K-means experiment with native Iterations -->
-    <bean id="experiment.flink.kmeans.nativeiterations" parent="experiment.flink-0.9.0" abstract="true">
+    <bean id="experiment.flink.kmeans.nativeiterations" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.KMeans                    \
@@ -68,7 +68,7 @@
     </bean>
 
     <!-- K-means experiment with multijob Iterations -->
-    <bean id="experiment.flink.kmeans.multijobiterations" parent="experiment.flink-0.9.0" abstract="true">
+    <bean id="experiment.flink.kmeans.multijobiterations" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.multijobiterations.KMeans                    \

@@ -43,13 +43,13 @@
         <!-- Flink -->
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients</artifactId>
+            <artifactId>flink-clients_2.10</artifactId>
             <version>${flink.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-scala</artifactId>
+            <artifactId>flink-scala_2.10</artifactId>
             <version>${flink.version}</version>
             <scope>provided</scope>
         </dependency>

@@ -24,7 +24,7 @@
     * Experiments
     *************************************************************************-->
 
-    <bean id="experiment.flink.pageRank-threshold.deltaIterations" parent="experiment.flink-1.0.0" abstract="true">
+    <bean id="experiment.flink.pageRank-threshold.nativeIterations" parent="experiment.flink-1.0.0" abstract="true">
         <constructor-arg name="command">
             <value><![CDATA[
               -v -c de.tuberlin.cit.experiments.iterations.flink.nativeiterations.PageRankDelta \
@@ -72,8 +72,8 @@
     <bean id="pageRank-threshold.test" class="org.peelframework.core.beans.experiment.ExperimentSuite">
         <constructor-arg name="experiments">
             <list value-type="org.peelframework.core.beans.experiment.Experiment">
-                <bean parent="experiment.flink.pageRank.deltaIterations">
-                    <constructor-arg name="name" value="pageRank-threshold.flink.test.deltaIterations"/>
+                <bean parent="experiment.flink.pageRank.nativeBulkIterations">
+                    <constructor-arg name="name" value="pageRank-threshold.flink.test.nativeIterations"/>
                     <constructor-arg name="runs" value="1"/>
                     <constructor-arg name="inputs">
                         <set><ref bean="dataset.edges.test" /></set>
@@ -139,8 +139,8 @@
                             </constructor-arg>
                         </bean>
 
-                        <bean parent="experiment.flink.pageRank-threshold.deltaIterations">
-                            <constructor-arg name="name" value="pageRank-threshold-__threshold__.flink.twitter-rv.deltaIterations"/>
+                        <bean parent="experiment.flink.pageRank-threshold.nativeIterations">
+                            <constructor-arg name="name" value="pageRank-threshold-__threshold__.flink.twitter-rv.nativeIterations"/>
                             <constructor-arg name="runs" value="1"/>
                             <constructor-arg name="inputs">
                                 <set><ref bean="dataset.twitter-rv" /></set>

@@ -23,6 +23,9 @@
     <import resource="datasets.xml"/>
 
     <!-- experiment beans -->
+    <import resource="experiments.tpc.xml"/>
+    <import resource="experiments.sgd.xml"/>
+
     <import resource="experiments.kmeans.xml"/>
     <import resource="experiments.connected-components.xml"/>
     <import resource="experiments.page-rank.xml"/>

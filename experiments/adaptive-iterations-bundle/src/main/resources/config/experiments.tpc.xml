@@ -66,6 +66,31 @@
     </constructor-arg>
   </bean>
 
+  <!-- tpchq3 output -->
+  <bean id="tpchq3.output" class="org.peelframework.core.beans.data.ExperimentOutput">
+    <constructor-arg name="path" value="${system.hadoop-2.path.output}/tpchq3-output" />
+    <constructor-arg name="fs" ref="hdfs-2.7.1" />
+  </bean>
+
+  <!-- tpchq3 experiment -->
+  <bean id="experiment.flink.tpchq3" parent="experiment.flink-1.0.0" abstract="true">
+    <constructor-arg name="command">
+      <value><![CDATA[
+        -v -c de.tuberlin.cit.experiments.iterations.flink.multijobiterations.TPCHQuery3 \
+        ${app.path.apps}/adaptive-iterations-flink-jobs-1.0-SNAPSHOT.jar \
+        --lineitem ${system.hadoop-2.path.input}/lineitem.tbl \
+        --customer ${system.hadoop-2.path.input}/customer.tbl \
+        --orders ${system.hadoop-2.path.input}/orders.tbl \
+        --output ${system.hadoop-2.path.output}/tpchq3-output
+      ]]></value>
+    </constructor-arg>
+    <constructor-arg name="outputs">
+      <set value-type="org.peelframework.core.beans.data.ExperimentOutput">
+        <ref bean="tpchq3.output" />
+      </set>
+    </constructor-arg>
+  </bean>
+
   <!--************************************************************************
   * Suites
   *************************************************************************-->
@@ -134,6 +159,65 @@
                   <ref bean="dataset.tpch.orders" />
                   <ref bean="dataset.tpch.lineitem" />
                   <ref bean="dataset.tpch.nation" />
+                </set>
+              </constructor-arg>
+              <constructor-arg name="config">
+                <value><![CDATA[
+                  dataset.tpch.folder                     = ${app.path.datasets}/tpch
+                  system.default.config.slaves            = ${env.slaves.__topXXX__.hosts}
+                  system.default.config.parallelism.total = ${env.slaves.__topXXX__.total.parallelism}
+                ]]></value>
+              </constructor-arg>
+            </bean>
+          </list>
+        </constructor-arg>
+      </bean>
+    </constructor-arg>
+  </bean>
+
+  <!-- suite for cluster -->
+  <bean id="tpchq3.cluster" class="org.peelframework.core.beans.experiment.ExperimentSuite">
+    <constructor-arg name="experiments">
+      <bean class="org.peelframework.core.beans.experiment.ExperimentSequence">
+        <constructor-arg name="parameters">
+          <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.CrossedParameters">
+            <constructor-arg name="parameters">
+              <list>
+                <bean class="org.peelframework.core.beans.experiment.ExperimentSequence.Parameter">
+                  <constructor-arg name="name" value="topXXX" />
+                  <constructor-arg name="vals">
+                    <list>
+                      <value>top004</value>
+                      <value>top008</value>
+                      <value>top012</value>
+                      <value>top016</value>
+                      <value>top020</value>
+                      <value>top024</value>
+                      <value>top028</value>
+                      <value>top032</value>
+                      <value>top036</value>
+                      <value>top040</value>
+                      <value>top044</value>
+                      <value>top048</value>
+                      <value>top052</value>
+                      <value>top056</value>
+                      <value>top060</value>
+                    </list>
+                  </constructor-arg>
+                </bean>
+              </list>
+            </constructor-arg>
+          </bean>
+        </constructor-arg>
+        <constructor-arg name="prototypes">
+          <list value-type="org.peelframework.core.beans.experiment.Experiment">
+            <bean parent="experiment.flink.tpchq3">
+              <constructor-arg name="name" value="tpchq3.flink.__topXXX__" />
+              <constructor-arg name="inputs">
+                <set>
+                  <ref bean="dataset.tpch.lineitem" />
+                  <ref bean="dataset.tpch.customer" />
+                  <ref bean="dataset.tpch.orders" />
                 </set>
               </constructor-arg>
               <constructor-arg name="config">
